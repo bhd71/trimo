@@ -1,0 +1,42 @@
+import React, { FC } from 'react';
+import { Period } from '../../../store/AppDataContext.tsx';
+
+export { Period };
+
+const PERIODS: { value: Period; label: string }[] = [
+    { value: Period.Today,     label: 'Today' },
+    { value: Period.Yesterday, label: 'Yesterday' },
+    { value: Period.Week,      label: 'This Week' },
+    { value: Period.Month,     label: 'This Month' },
+];
+
+interface IProps {
+    value: Period;
+    onChange: (period: Period) => void;
+}
+
+const PeriodSelector: FC<IProps> = ({ value, onChange }) => {
+    return (
+        <div className="flex gap-2">
+            {PERIODS.map(({ value: p, label }) => {
+                const isActive = value === p;
+                return (
+                    <button
+                        key={p}
+                        onClick={() => onChange(p)}
+                        style={isActive ? { boxShadow: '0 0 12px rgba(147,51,234,0.8), 0 0 28px rgba(147,51,234,0.4)' } : undefined}
+                        className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
+                            isActive
+                                ? 'bg-white/10 text-white'
+                                : 'bg-white/8 text-white/50 hover:bg-white/12 hover:text-white/80'
+                        }`}
+                    >
+                        {label}
+                    </button>
+                );
+            })}
+        </div>
+    );
+};
+
+export default PeriodSelector;
