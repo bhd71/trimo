@@ -21,7 +21,7 @@ const AppFilterBar: FC<IProps> = ({ searchQuery, onSearchChange, sortKey, onSort
                 placeholder="Search apps…"
                 value={searchQuery}
                 onChange={e => onSearchChange(e.target.value)}
-                className="w-full bg-[#0f0f1a] border border-white/10 rounded-xl pl-8 pr-3 py-2 text-sm text-white/80 placeholder-white/25 outline-none focus:border-purple-500/50 focus:bg-[#14141f] transition-all"
+                className="w-full bg-white/5 border border-white/10 rounded-xl pl-8 pr-3 py-2 text-sm text-white/80 placeholder-white/25 outline-none focus:border-purple-500/50 focus:bg-white/8 transition-all"
             />
             {searchQuery && (
                 <button
