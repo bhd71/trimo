@@ -189,9 +189,9 @@ const NotificationSection: FC<IProps> = ({ app }) => {
             ) : (
                 <button
                     onClick={() => openForm()}
-                    className="flex items-center gap-2 self-start px-3 py-1.5 rounded-full text-xs text-white/40 hover:text-white/80 border border-white/10 hover:border-white/20 transition-all duration-150"
+                    className="flex items-center gap-2 self-start px-4 py-2 rounded-lg text-sm text-white/60 bg-neutral-800 border border-white/10 hover:bg-neutral-700 hover:text-white hover:border-white/20 shadow-sm transition-all duration-150"
                 >
-                    <svg viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3">
+                    <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
                         <path d="M8 1a1 1 0 011 1v5h5a1 1 0 010 2H9v5a1 1 0 01-2 0V9H2a1 1 0 010-2h5V2a1 1 0 011-1z"/>
                     </svg>
                     Add notification
