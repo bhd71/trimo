@@ -46,7 +46,7 @@ const Settings: FC<IProps> = ({ onClose }) => {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [autostart, setAutostart] = useState(false);
-  const [focusTracking, setFocusTracking] = useState(true);
+  const [focusTracking, setFocusTracking] = useState(false);
   const [idleThreshold, setIdleThreshold] = useState("5");
 
   useEffect(() => {
@@ -57,7 +57,7 @@ const Settings: FC<IProps> = ({ onClose }) => {
 
   useEffect(() => {
     invoke<string | null>("get_preference", { key: "focus_tracking_enabled" })
-      .then((val) => setFocusTracking(val !== "false"))
+      .then((val) => setFocusTracking(val === "true"))
       .catch(() => {});
     invoke<string | null>("get_preference", { key: "idle_threshold_minutes" })
       .then((val) => {
@@ -126,7 +126,7 @@ const Settings: FC<IProps> = ({ onClose }) => {
   };
 
   return (
-    <div className="bg-white/5 border border-white/10 rounded-2xl px-6 py-5 flex flex-col gap-5">
+    <div className="bg-[#0f0f1a] border border-white/10 rounded-2xl px-6 py-5 flex flex-col gap-5">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold text-white/80 uppercase tracking-widest">
           Settings

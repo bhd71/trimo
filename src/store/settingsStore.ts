@@ -10,7 +10,7 @@ interface ISettingsStore {
 }
 
 export const useSettingsStore = create<ISettingsStore>((set) => ({
-    monitoringInterval: 5,
+    monitoringInterval: 1,
     dailyGoalSeconds: 0,
 
     loadPreferences: async () => {
