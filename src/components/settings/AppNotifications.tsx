@@ -124,7 +124,7 @@ const AppNotifications: FC = () => {
                         value={appName}
                         onChange={e => { setAppName(e.target.value); setFormError(''); }}
                         placeholder="e.g. Discord"
-                        className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white placeholder-white/20 outline-none focus:border-purple-500/60 transition-colors"
+                        className="bg-[#3a3a3a] border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white placeholder-white/20 outline-none focus:border-purple-500/60 transition-colors"
                     />
                     <datalist id={datalistId}>
                         {apps.map(a => <option key={a.app_name} value={a.app_name} />)}
@@ -141,7 +141,7 @@ const AppNotifications: FC = () => {
                             max={23}
                             value={hours}
                             onChange={e => { setHours(Math.max(0, Number(e.target.value))); setFormError(''); }}
-                            className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white outline-none focus:border-purple-500/60 transition-colors"
+                            className="bg-[#3a3a3a] border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white outline-none focus:border-purple-500/60 transition-colors"
                         />
                     </div>
                     <div className="flex flex-col gap-1 flex-1">
@@ -152,7 +152,7 @@ const AppNotifications: FC = () => {
                             max={59}
                             value={minutes}
                             onChange={e => { setMinutes(Math.max(0, Number(e.target.value))); setFormError(''); }}
-                            className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white outline-none focus:border-purple-500/60 transition-colors"
+                            className="bg-[#3a3a3a] border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white outline-none focus:border-purple-500/60 transition-colors"
                         />
                     </div>
                 </div>
@@ -164,7 +164,7 @@ const AppNotifications: FC = () => {
                         value={message}
                         onChange={e => setMessage(e.target.value)}
                         placeholder='e.g. "Time to take a break!"'
-                        className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white placeholder-white/20 outline-none focus:border-purple-500/60 transition-colors"
+                        className="bg-[#3a3a3a] border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white placeholder-white/20 outline-none focus:border-purple-500/60 transition-colors"
                     />
                 </div>
 
