@@ -17,7 +17,7 @@
         "focus": true,
         "title": "Trimo",
         "alwaysOnTop": false,
-        "backgroundColor": "#2f2f2f"
+        "backgroundColor": "#111111"
       }
     ],
     "security": {

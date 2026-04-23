@@ -9,9 +9,10 @@ interface IProps<T extends string> {
     value: T;
     options: ISelectOption<T>[];
     onChange: (value: T) => void;
+    className?: string;
 }
 
-function Select<T extends string>({ value, options, onChange }: IProps<T>) {
+function Select<T extends string>({ value, options, onChange, className }: IProps<T>) {
     const [open, setOpen] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
 
@@ -29,13 +30,13 @@ function Select<T extends string>({ value, options, onChange }: IProps<T>) {
     }, [open]);
 
     return (
-        <div ref={ref} className="relative inline-block">
+        <div ref={ref} className={`relative ${className ?? 'inline-block'}`}>
             <button
                 onClick={() => setOpen(o => !o)}
-                className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 border ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 border shadow-sm ${className ? 'w-full justify-between' : ''} ${
                     open
-                        ? 'bg-[#3a3a3a] text-white border-white/20'
-                        : 'bg-[#3a3a3a] text-white/70 border-white/10 hover:bg-[#404040] hover:text-white hover:border-white/20'
+                        ? 'bg-neutral-800 text-white border-white/20 shadow-md'
+                        : 'bg-neutral-800 text-white/70 border-white/10 hover:shadow-md hover:border-white/20 hover:text-white'
                 }`}
             >
                 <span>{selected?.label}</span>
@@ -53,7 +54,7 @@ function Select<T extends string>({ value, options, onChange }: IProps<T>) {
             </button>
 
             {open && (
-                <div className="absolute top-full left-0 mt-2 min-w-full rounded-xl border border-white/10 bg-[#3a3a3a] shadow-2xl z-50 overflow-hidden py-1">
+                <div className="absolute top-full left-0 mt-2 min-w-full rounded-xl border border-white/15 bg-neutral-900 shadow-2xl z-50 overflow-hidden py-1">
                     {options.map(opt => {
                         const isActive = opt.value === value;
                         return (

@@ -13,7 +13,7 @@ const GoalProgress: FC<IProps> = ({ totalSecondsToday, dailyGoalSeconds }) => {
     const exceeded = totalSecondsToday >= dailyGoalSeconds;
 
     return (
-        <div className="bg-white/5 border border-white/10 rounded-2xl px-5 py-4 flex flex-col gap-3">
+        <div className="bg-neutral-800 border border-white/5 shadow-sm rounded-2xl px-5 py-4 flex flex-col gap-3">
             <div className="flex items-center justify-between">
                 <p className="text-xs text-white/40 uppercase tracking-widest">Daily goal</p>
                 <p className={`text-xs font-semibold ${exceeded ? 'text-red-400' : 'text-white/60'}`}>
@@ -22,7 +22,7 @@ const GoalProgress: FC<IProps> = ({ totalSecondsToday, dailyGoalSeconds }) => {
             </div>
 
             {/* Progress bar */}
-            <div className="h-2 bg-white/8 rounded-full overflow-hidden">
+            <div className="h-2 bg-neutral-700 rounded-full overflow-hidden">
                 <div
                     className={`h-full rounded-full transition-all duration-500 ${
                         exceeded ? 'bg-red-500' : pct >= 80 ? 'bg-yellow-400' : 'bg-purple-500'

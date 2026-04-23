@@ -15,7 +15,7 @@ const DailyUsageChart: FC<IProps> = ({ rows }) => {
     }));
 
     return (
-        <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-3">
+        <div className="bg-neutral-800 border border-white/5 rounded-xl px-4 py-3">
             <ResponsiveContainer width="100%" height={180}>
                 <BarChart data={data} margin={{ top: 4, right: 8, left: 0, bottom: 4 }} barCategoryGap="30%">
                     <XAxis

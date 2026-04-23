@@ -16,7 +16,7 @@ const DailyUsageTable: FC<IProps> = ({ rows, total }) => (
         {rows.map(r => (
             <div
                 key={r.date}
-                className="grid grid-cols-2 text-sm text-white/80 bg-white/[0.03] hover:bg-white/[0.06] rounded-lg px-2 py-1.5 transition-colors"
+                className="grid grid-cols-2 text-sm text-white/80 bg-neutral-800 hover:bg-neutral-700 rounded-lg px-2 py-1.5 border border-white/5 transition-colors"
             >
                 <span>{formatDateLabel(r.date)}</span>
                 <span className="text-right text-white/60">{r.formatted_duration}</span>

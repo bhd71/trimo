@@ -51,7 +51,7 @@ const AppDetailsModal: FC<IProps> = ({ app, onClose }) => {
             onClick={onClose}
         >
             <div
-                className="modal-scroll relative w-[480px] max-h-[80vh] overflow-y-auto bg-[#252525] border border-white/10 rounded-2xl p-5 flex flex-col gap-4"
+                className="modal-scroll relative w-[480px] max-h-[80vh] overflow-y-auto bg-neutral-900 border border-white/15 shadow-2xl rounded-2xl p-5 flex flex-col gap-4"
                 onClick={e => e.stopPropagation()}
             >
                 <ModalHeader appName={app.app_name} onClose={onClose} />
@@ -65,10 +65,10 @@ const AppDetailsModal: FC<IProps> = ({ app, onClose }) => {
                                 key={t}
                                 onClick={() => setTab(t)}
                                 style={isActive ? { boxShadow: '0 0 12px rgba(147,51,234,0.8), 0 0 28px rgba(147,51,234,0.4)' } : undefined}
-                                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
+                                className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-all duration-200 ${
                                     isActive
-                                        ? 'bg-white/10 text-white'
-                                        : 'bg-white/5 text-white/50 hover:bg-white/10 hover:text-white/80'
+                                        ? 'bg-neutral-700 border-white/15 text-white shadow-sm'
+                                        : 'bg-neutral-800 border-white/5 text-white/50 shadow-sm hover:shadow-md hover:border-white/15 hover:bg-neutral-700 hover:text-white/80'
                                 }`}
                             >
                                 {t === 'week' ? 'This Week' : 'This Month'}
