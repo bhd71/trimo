@@ -1,11 +1,11 @@
-mod helpers;
+pub mod helpers;
 mod state;
 mod db;
-mod process;
+pub mod process;
 mod logo;
 mod commands;
 
-use std::{collections::HashSet, sync::Arc};
+use std::sync::Arc;
 
 use sqlx::{Row, sqlite::SqlitePool};
 use state::{AppState, new_logo_cache};
@@ -23,7 +23,7 @@ async fn read_monitoring_interval(db: &SqlitePool) -> u64 {
         .ok()
         .flatten()
         .and_then(|r| r.get::<String, _>("value").parse::<u64>().ok())
-        .unwrap_or(1)
+        .unwrap_or(5)
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -41,13 +41,13 @@ pub async fn run() {
     log::info!("Current executable name: {}", current_exe_name);
 
     let app_state = AppState {
-        db: Arc::new(Mutex::new(db)),
+        db,
         monitoring_task: Arc::new(Mutex::new(None)),
         logo_cache: Arc::new(Mutex::new(new_logo_cache())),
         active_apps: Arc::new(Mutex::new(Vec::new())),
         current_exe_name,
-        notification_fired: Arc::new(Mutex::new(HashSet::new())),
         focus_app: Arc::new(Mutex::new(None)),
+        last_external_focus: Arc::new(Mutex::new(None)),
     };
 
     log::info!("Application state initialized");
@@ -67,6 +67,8 @@ pub async fn run() {
             commands::usage::get_total_monitoring_time,
             commands::usage::get_app_daily_usage,
             commands::usage::get_monitoring_trend,
+            commands::usage::get_dashboard_data,
+            commands::usage::get_app_logo,
             commands::preferences::get_preference,
             commands::preferences::set_preference,
             commands::notifications::get_app_notifications,
@@ -80,8 +82,8 @@ pub async fn run() {
             let logo_cache = state.logo_cache.clone();
             let current_exe_name = state.current_exe_name.clone();
             let task = state.monitoring_task.clone();
-            let notification_fired = state.notification_fired.clone();
             let focus_app = state.focus_app.clone();
+            let last_external_focus = state.last_external_focus.clone();
             let app_handle = app.handle().clone();
 
             let active_apps = state.active_apps.clone();
@@ -94,8 +96,8 @@ pub async fn run() {
                     task,
                     monitoring_interval,
                     app_handle,
-                    notification_fired,
                     focus_app,
+                    last_external_focus,
                 )
                 .await;
             });

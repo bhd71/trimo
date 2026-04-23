@@ -2,18 +2,18 @@ import React, { FC, ReactNode, useEffect, useState } from 'react';
 import TrackingStatus from './TrackingStatus.tsx';
 import ActiveApps from './ActiveApps.tsx';
 import Settings from '../settings/Settings.tsx';
-import { useAppData } from '../../store/AppDataContext.tsx';
-import { Period } from '../../store/AppDataContext.tsx';
+import { useAppStore, Period } from '../../store/appStore.ts';
 
 interface IProps {
-    isMonitoring: boolean;
-    onToggle: () => void;
     children: ReactNode;
 }
 
-const DashboardLayout: FC<IProps> = ({ isMonitoring, onToggle, children }) => {
+const DashboardLayout: FC<IProps> = ({ children }) => {
     const [showSettings, setShowSettings] = useState(false);
-    const { setPeriod } = useAppData();
+    const setPeriod = useAppStore(s => s.setPeriod);
+    const isIdle = useAppStore(s => s.isIdle);
+    const goalJustReached = useAppStore(s => s.goalJustReached);
+    const dismissGoalToast = useAppStore(s => s.dismissGoalToast);
 
     // Global keyboard shortcuts
     useEffect(() => {
@@ -51,10 +51,7 @@ const DashboardLayout: FC<IProps> = ({ isMonitoring, onToggle, children }) => {
             <header className="flex items-center justify-between">
                 <h1 className="text-lg font-bold text-white tracking-tight">Trimo</h1>
                 <div className="flex items-center gap-3">
-                    <TrackingStatus
-                        isMonitoring={isMonitoring}
-                        onToggle={onToggle}
-                    />
+                    <TrackingStatus />
                     <button
                         onClick={() => setShowSettings(s => !s)}
                         aria-label="Settings"
@@ -74,7 +71,7 @@ const DashboardLayout: FC<IProps> = ({ isMonitoring, onToggle, children }) => {
                     onClick={() => setShowSettings(false)}
                 >
                     <div
-                        className="w-full max-w-md mx-4"
+                        className="w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto modal-scroll"
                         onClick={e => e.stopPropagation()}
                     >
                         <Settings onClose={() => setShowSettings(false)} />
@@ -82,6 +79,19 @@ const DashboardLayout: FC<IProps> = ({ isMonitoring, onToggle, children }) => {
                 </div>
             )}
             <ActiveApps />
+            {goalJustReached && (
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-5 py-3 rounded-2xl bg-purple-600/20 border border-purple-500/30 backdrop-blur-sm shadow-lg shadow-purple-900/20 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <span className="text-purple-300 text-lg">🎯</span>
+                    <span className="text-sm text-white/80 font-medium">Daily screen time goal reached!</span>
+                    <button
+                        onClick={dismissGoalToast}
+                        className="ml-2 text-white/30 hover:text-white/70 transition-colors text-base leading-none"
+                        aria-label="Dismiss"
+                    >
+                        ✕
+                    </button>
+                </div>
+            )}
             {children}
         </main>
     );

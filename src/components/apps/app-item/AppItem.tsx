@@ -1,8 +1,8 @@
 import React, { FC, useState } from 'react';
-import { Base64Image } from '../../../helpers/image-convert.tsx';
+import { AppLogo } from '../../../helpers/image-convert.tsx';
 import { IApp } from '../../../types/App.interface.ts';
 import { TruncatedText } from '../../../helpers/name-truncate.tsx';
-import { useAppData } from '../../../store/AppDataContext.tsx';
+import { useAppStore } from '../../../store/appStore.ts';
 import { pctChange } from '../../../helpers/app-stats.ts';
 
 const APP_NAME_MAX_LENGTH = 14;
@@ -18,7 +18,7 @@ interface IProps {
 
 const AppItem: FC<IProps> = ({ app, sharePercent, yesterdayDuration, onClick }) => {
     const [pressed, setPressed] = useState(false);
-    const { notificationRules } = useAppData();
+    const notificationRules = useAppStore(s => s.notificationRules);
     const hasActiveAlert = notificationRules.some(r => r.app_name === app.app_name && r.enabled);
     const change = yesterdayDuration !== undefined ? pctChange(app.duration, yesterdayDuration) : null;
     const fillWidth = Math.max(sharePercent, MIN_FILL_WIDTH_PERCENT);
@@ -49,7 +49,7 @@ const AppItem: FC<IProps> = ({ app, sharePercent, yesterdayDuration, onClick }) 
                 </span>
             )}
 
-            <Base64Image base64Data={app.logo_base64} />
+            <AppLogo appName={app.app_name} />
             <span className="text-xs text-white/50 text-center w-full leading-tight relative">
                 <TruncatedText text={app.app_name} maxLength={APP_NAME_MAX_LENGTH} />
             </span>

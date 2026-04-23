@@ -1,11 +1,11 @@
 import React, { FC, useEffect, useRef, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { INotificationRule } from '../../types/App.interface.ts';
-import { useAppData } from '../../store/AppDataContext.tsx';
+import { useAppStore } from '../../store/appStore.ts';
 import { formatSeconds } from '../../helpers/format-time.ts';
 
 const AppNotifications: FC = () => {
-    const { apps } = useAppData();
+    const apps = useAppStore(s => s.apps);
     const [rules, setRules] = useState<INotificationRule[]>([]);
 
     // Add-rule form state

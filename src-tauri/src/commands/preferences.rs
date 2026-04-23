@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use sqlx::Row;
 use tauri::State;
 
@@ -11,14 +9,10 @@ pub async fn get_preference(
     key: String,
 ) -> Result<Option<String>, String> {
     log::debug!("[CMD] get_preference key={}", key);
-    let db = match tokio::time::timeout(Duration::from_secs(5), state.db.lock()).await {
-        Ok(db) => db,
-        Err(_) => return Err("Database lock timeout".to_string()),
-    };
 
     let row = sqlx::query("SELECT value FROM user_preferences WHERE key = ?")
         .bind(&key)
-        .fetch_optional(&*db)
+        .fetch_optional(&state.db)
         .await
         .map_err(|e| e.to_string())?;
 
@@ -32,10 +26,6 @@ pub async fn set_preference(
     value: String,
 ) -> Result<(), String> {
     log::debug!("[CMD] set_preference key={} value={}", key, value);
-    let db = match tokio::time::timeout(Duration::from_secs(5), state.db.lock()).await {
-        Ok(db) => db,
-        Err(_) => return Err("Database lock timeout".to_string()),
-    };
 
     sqlx::query(
         "INSERT INTO user_preferences (key, value) VALUES (?, ?)
@@ -43,7 +33,7 @@ pub async fn set_preference(
     )
     .bind(&key)
     .bind(&value)
-    .execute(&*db)
+    .execute(&state.db)
     .await
     .map_err(|e| e.to_string())?;
 

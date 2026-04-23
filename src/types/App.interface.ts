@@ -4,7 +4,6 @@ export interface IApp {
     app_name: string;
     duration: number;
     formatted_duration: string;
-    logo_base64: string;
 }
 
 export interface IAppDailyUsage {
@@ -24,4 +23,13 @@ export interface INotificationRule {
 export interface IMonitoringTrend {
     date: string;           // "YYYY-MM-DD"
     total_seconds: number;
+}
+
+export interface IDashboardData {
+    apps: IApp[];
+    yesterday_apps: IApp[];
+    monitoring_seconds: number;
+    total_seconds_today: number;
+    active_apps: string[];
+    trend_data: IMonitoringTrend[];
 }

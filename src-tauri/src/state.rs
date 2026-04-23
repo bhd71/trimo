@@ -1,4 +1,4 @@
-use std::{collections::HashSet, num::NonZeroUsize, sync::Arc};
+use std::{num::NonZeroUsize, sync::Arc};
 
 use chrono::{DateTime, Utc};
 use lru::LruCache;
@@ -23,7 +23,6 @@ pub struct AppUsageStats {
     pub timestamp: DateTime<Utc>,
     pub duration: i64,
     pub formatted_duration: String,
-    pub logo_base64: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -39,6 +38,16 @@ pub struct MonitoringTrend {
     pub total_seconds: i64,
 }
 
+#[derive(Debug, Serialize)]
+pub struct DashboardData {
+    pub apps: Vec<AppUsageStats>,
+    pub yesterday_apps: Vec<AppUsageStats>,
+    pub monitoring_seconds: i64,
+    pub total_seconds_today: i64,
+    pub active_apps: Vec<String>,
+    pub trend_data: Vec<MonitoringTrend>,
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AppNotificationRule {
     pub id: Option<i64>,
@@ -49,13 +58,16 @@ pub struct AppNotificationRule {
 }
 
 pub struct AppState {
-    pub db: Arc<Mutex<SqlitePool>>,
+    pub db: SqlitePool,
     pub monitoring_task: Arc<Mutex<Option<tokio::task::JoinHandle<()>>>>,
     pub logo_cache: Arc<Mutex<LruCache<String, Option<String>>>>,
     pub active_apps: Arc<Mutex<Vec<String>>>,
     pub current_exe_name: String,
-    pub notification_fired: Arc<Mutex<HashSet<String>>>,
     pub focus_app: Arc<Mutex<Option<String>>>,
+    /// Last external app that was in focus (not Trimo itself). Used so that when
+    /// the user switches to the Trimo window to check stats, we keep crediting
+    /// time to the previous focused app instead of recording nothing.
+    pub last_external_focus: Arc<Mutex<Option<String>>>,
 }
 
 pub fn new_logo_cache() -> LruCache<String, Option<String>> {

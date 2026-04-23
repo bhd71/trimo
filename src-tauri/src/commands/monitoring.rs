@@ -1,27 +1,34 @@
-use std::{collections::HashSet, sync::Arc, time::Duration};
+use std::{sync::Arc, time::Duration};
 
 use lru::LruCache;
 use sqlx::{Row, sqlite::SqlitePool};
-use tauri::State;
+use tauri::{Emitter, State};
 use tokio::{sync::Mutex, task::JoinHandle};
 
 use crate::{
     logo::{create_placeholder_logo, extract_app_logo},
-    process::{get_foreground_app_name, get_opened_apps_with_info, is_process_safe_to_monitor, AppInfo},
+    process::{get_foreground_app_name, get_opened_apps_with_info, is_process_safe_to_monitor, is_system_idle, AppInfo},
     state::AppState,
 };
 
+/// Payload emitted on every monitoring cycle so the frontend knows whether the
+/// system was idle and can update its own state without an extra IPC call.
+#[derive(serde::Serialize, Clone)]
+struct MonitoringTickPayload {
+    is_idle: bool,
+}
+
 /// Starts the monitoring loop if not already running. Safe to call from any async context.
 pub async fn start_monitoring_inner(
-    db: Arc<Mutex<SqlitePool>>,
+    db: SqlitePool,
     logo_cache: Arc<Mutex<LruCache<String, Option<String>>>>,
     active_apps: Arc<Mutex<Vec<String>>>,
     current_exe_name: String,
     task_handle: Arc<Mutex<Option<JoinHandle<()>>>>,
     interval_secs: u64,
     app_handle: tauri::AppHandle,
-    notification_fired: Arc<Mutex<HashSet<String>>>,
     focus_app: Arc<Mutex<Option<String>>>,
+    last_external_focus: Arc<Mutex<Option<String>>>,
 ) {
     let mut handle = task_handle.lock().await;
     if handle.is_some() {
@@ -44,13 +51,18 @@ pub async fn start_monitoring_inner(
                 }
             }
 
-            if let Err(e) =
-                perform_monitoring_cycle(&db, &logo_cache, &active_apps, interval_secs as i64, &current_exe_name, &app_handle, &notification_fired, &focus_app)
-                    .await
+            let is_idle = match perform_monitoring_cycle(&db, &logo_cache, &active_apps, interval_secs as i64, &current_exe_name, &app_handle, &focus_app, &last_external_focus)
+                .await
             {
-                log::error!("Error in monitoring cycle: {}", e);
-                continue;
-            }
+                Ok(idle) => idle,
+                Err(e) => {
+                    log::error!("Error in monitoring cycle: {}", e);
+                    continue;
+                }
+            };
+
+            // Notify the frontend that fresh data is ready, along with idle state
+            let _ = app_handle.emit("monitoring-tick", MonitoringTickPayload { is_idle });
 
             tokio::time::sleep(Duration::from_millis(100)).await;
         }
@@ -68,10 +80,9 @@ pub async fn get_monitoring_status(state: State<'_, AppState>) -> Result<bool, S
     Ok(handle.is_some())
 }
 
-async fn read_saved_interval(db: &Arc<Mutex<SqlitePool>>) -> u64 {
-    let db_guard = db.lock().await;
+async fn read_saved_interval(db: &SqlitePool) -> u64 {
     sqlx::query("SELECT value FROM user_preferences WHERE key = 'monitoring_interval'")
-        .fetch_optional(&*db_guard)
+        .fetch_optional(db)
         .await
         .ok()
         .flatten()
@@ -79,7 +90,7 @@ async fn read_saved_interval(db: &Arc<Mutex<SqlitePool>>) -> u64 {
             let v: String = sqlx::Row::get(&r, "value");
             v.parse::<u64>().ok()
         })
-        .unwrap_or(1)
+        .unwrap_or(5)
 }
 
 #[tauri::command]
@@ -112,8 +123,8 @@ pub async fn toggle_monitoring(
             state.monitoring_task.clone(),
             interval_secs,
             app_handle,
-            state.notification_fired.clone(),
             state.focus_app.clone(),
+            state.last_external_focus.clone(),
         )
         .await;
         Ok(format!(
@@ -131,19 +142,14 @@ pub async fn apply_monitoring_interval(
     interval_seconds: u64,
 ) -> Result<(), String> {
     log::info!("[CMD] apply_monitoring_interval interval_seconds={}", interval_seconds);
-    {
-        let db = tokio::time::timeout(Duration::from_secs(5), state.db.lock())
-            .await
-            .map_err(|_| "Database lock timeout")?;
-        sqlx::query(
-            "INSERT INTO user_preferences (key, value) VALUES ('monitoring_interval', ?)
-             ON CONFLICT(key) DO UPDATE SET value = excluded.value",
-        )
-        .bind(interval_seconds.to_string())
-        .execute(&*db)
-        .await
-        .map_err(|e| e.to_string())?;
-    }
+    sqlx::query(
+        "INSERT INTO user_preferences (key, value) VALUES ('monitoring_interval', ?)
+         ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+    )
+    .bind(interval_seconds.to_string())
+    .execute(&state.db)
+    .await
+    .map_err(|e| e.to_string())?;
 
     let was_running = {
         let mut handle = state.monitoring_task.lock().await;
@@ -164,8 +170,8 @@ pub async fn apply_monitoring_interval(
             state.monitoring_task.clone(),
             interval_seconds,
             app_handle,
-            state.notification_fired.clone(),
             state.focus_app.clone(),
+            state.last_external_focus.clone(),
         )
         .await;
     }
@@ -174,21 +180,21 @@ pub async fn apply_monitoring_interval(
 }
 
 async fn perform_monitoring_cycle(
-    db: &Arc<Mutex<SqlitePool>>,
+    db: &SqlitePool,
     logo_cache: &Arc<Mutex<LruCache<String, Option<String>>>>,
     active_apps: &Arc<Mutex<Vec<String>>>,
     interval_seconds: i64,
     current_exe_name: &str,
     app_handle: &tauri::AppHandle,
-    notification_fired: &Arc<Mutex<HashSet<String>>>,
     focus_app: &Arc<Mutex<Option<String>>>,
-) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    last_external_focus: &Arc<Mutex<Option<String>>>,
+) -> Result<bool, Box<dyn std::error::Error + Send + Sync>> {
     let apps_info = get_opened_apps_with_info(current_exe_name);
 
     if apps_info.is_empty() {
         *active_apps.lock().await = Vec::new();
         *focus_app.lock().await = None;
-        return Ok(());
+        return Ok(false);
     }
 
     let filtered_apps: Vec<AppInfo> = apps_info
@@ -199,15 +205,42 @@ async fn perform_monitoring_cycle(
     if filtered_apps.is_empty() {
         *active_apps.lock().await = Vec::new();
         *focus_app.lock().await = None;
-        return Ok(());
+        return Ok(false);
     }
 
     // Update the shared active-apps list for list_opened_apps to read
     *active_apps.lock().await = filtered_apps.iter().map(|a| a.name.clone()).collect();
 
-    // Determine which app is currently in focus
-    let focused_name = get_foreground_app_name(current_exe_name);
+    // Determine which app is currently in focus.
+    // get_foreground_app_name returns None when Trimo itself is the foreground window.
+    // In that case fall back to the last known external focus so that time keeps
+    // accumulating for the app the user was using before they switched to check stats.
+    let raw_focus = get_foreground_app_name(current_exe_name);
+    let focused_name = if raw_focus.is_some() {
+        // Update the last-known external focus
+        *last_external_focus.lock().await = raw_focus.clone();
+        raw_focus
+    } else {
+        // Trimo is focused — keep crediting the previous external app
+        last_external_focus.lock().await.clone()
+    };
     *focus_app.lock().await = focused_name.clone();
+
+    // Skip duration recording when system is idle
+    let idle_threshold: u64 = sqlx::query(
+        "SELECT value FROM user_preferences WHERE key = 'idle_threshold_minutes'"
+    )
+    .fetch_optional(db)
+    .await
+    .ok()
+    .flatten()
+    .and_then(|r| r.get::<String, _>("value").parse::<u64>().ok())
+    .unwrap_or(5);
+
+    if is_system_idle(idle_threshold) {
+        log::debug!("System idle (>{} min), skipping duration increment", idle_threshold);
+        return Ok(true);
+    }
 
     // Resolve logos from cache before acquiring the DB lock
     let mut app_logos: Vec<(String, Option<String>)> = Vec::new();
@@ -233,22 +266,18 @@ async fn perform_monitoring_cycle(
 
     log::debug!("Monitoring {} apps, focused: {:?}", app_logos.len(), focused_name);
 
-    let db_guard = tokio::time::timeout(Duration::from_secs(5), db.lock())
-        .await
-        .map_err(|_| "Database lock timeout")?;
-
     // Check whether focus-only tracking is enabled (default: true)
     let focus_tracking_enabled = sqlx::query(
         "SELECT value FROM user_preferences WHERE key = 'focus_tracking_enabled'"
     )
-    .fetch_optional(&*db_guard)
+    .fetch_optional(db)
     .await
     .ok()
     .flatten()
     .map(|r| r.get::<String, _>("value") != "false")
     .unwrap_or(true);
 
-    let mut tx = db_guard.begin().await?;
+    let mut tx = db.begin().await?;
 
     // Increment monitoring_stats when: focus tracking off (always active), or focused app present
     if !focus_tracking_enabled || focused_name.is_some() {
@@ -299,31 +328,85 @@ async fn perform_monitoring_cycle(
     tx.commit().await?;
 
     // Update tray tooltip with today's stats (best-effort)
-    update_tray_tooltip(app_handle, &db_guard).await;
-
-    drop(db_guard);
+    update_tray_tooltip(app_handle, db).await;
 
     // Fire any pending notifications (best-effort; errors are non-fatal)
     let active_names: Vec<String> = active_apps.lock().await.clone();
-    check_notifications(db, app_handle, notification_fired, &active_names).await;
+    check_notifications(db, app_handle, &active_names).await;
+    check_daily_goal(db, app_handle).await;
 
-    Ok(())
+    Ok(false)
+}
+
+async fn check_daily_goal(db: &SqlitePool, app_handle: &tauri::AppHandle) {
+    // Read the configured daily goal (0 = disabled)
+    let goal_seconds: i64 = sqlx::query(
+        "SELECT value FROM user_preferences WHERE key = 'daily_goal_seconds'"
+    )
+    .fetch_optional(db)
+    .await
+    .ok()
+    .flatten()
+    .and_then(|r| r.get::<String, _>("value").parse::<i64>().ok())
+    .unwrap_or(0);
+
+    if goal_seconds <= 0 {
+        return;
+    }
+
+    // Already notified today?
+    let already_fired: bool = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM notifications WHERE app_name = '_daily_goal' AND date = date('now')"
+    )
+    .fetch_one(db)
+    .await
+    .unwrap_or(0i64) > 0;
+
+    if already_fired {
+        return;
+    }
+
+    let total_today: i64 = sqlx::query_scalar(
+        "SELECT COALESCE(total_seconds, 0) FROM monitoring_stats WHERE date = date('now')"
+    )
+    .fetch_optional(db)
+    .await
+    .ok()
+    .flatten()
+    .unwrap_or(0);
+
+    if total_today >= goal_seconds {
+        let hours = goal_seconds / 3600;
+        let mins = (goal_seconds % 3600) / 60;
+        let label = match (hours, mins) {
+            (h, m) if h > 0 && m > 0 => format!("{}h {}m", h, m),
+            (h, _) if h > 0           => format!("{}h", h),
+            (_, m)                    => format!("{}m", m),
+        };
+        use tauri_plugin_notification::NotificationExt;
+        let _ = app_handle
+            .notification()
+            .builder()
+            .title("Daily screen time goal reached")
+            .body(&format!("You've reached your daily goal of {} screen time.", label))
+            .show();
+        let _ = app_handle.emit("daily-goal-reached", ());
+        let _ = sqlx::query(
+            "INSERT OR IGNORE INTO notifications (app_name, date) VALUES ('_daily_goal', date('now'))"
+        )
+        .execute(db)
+        .await;
+    }
 }
 
 async fn check_notifications(
-    db: &Arc<Mutex<SqlitePool>>,
+    db: &SqlitePool,
     app_handle: &tauri::AppHandle,
-    notification_fired: &Arc<Mutex<HashSet<String>>>,
     active_names: &[String],
 ) {
     if active_names.is_empty() {
         return;
     }
-
-    let db_guard = match tokio::time::timeout(Duration::from_secs(5), db.lock()).await {
-        Ok(g) => g,
-        Err(_) => return,
-    };
 
     // Fetch enabled rules that match currently-active apps
     let placeholders = active_names
@@ -339,7 +422,7 @@ async fn check_notifications(
     for name in active_names {
         q = q.bind(name);
     }
-    let rows = match q.fetch_all(&*db_guard).await {
+    let rows = match q.fetch_all(db).await {
         Ok(r) => r,
         Err(_) => return,
     };
@@ -348,14 +431,21 @@ async fn check_notifications(
         return;
     }
 
-    let mut fired = notification_fired.lock().await;
-
     for row in rows {
         let app_name: String = row.get("app_name");
         let threshold: i64 = row.get("threshold_seconds");
         let message: String = row.get("message");
 
-        if fired.contains(&app_name) {
+        // Check if already fired today (persisted across restarts)
+        let already_fired: bool = sqlx::query_scalar(
+            "SELECT COUNT(*) FROM notifications WHERE app_name = ? AND date = date('now')"
+        )
+        .bind(&app_name)
+        .fetch_one(db)
+        .await
+        .unwrap_or(0i64) > 0;
+
+        if already_fired {
             continue;
         }
 
@@ -364,7 +454,7 @@ async fn check_notifications(
             "SELECT COALESCE(SUM(u.duration), 0) FROM app_usage u JOIN apps a ON a.id = u.app_id WHERE a.name = ? AND u.date = date('now')"
         )
         .bind(&app_name)
-        .fetch_one(&*db_guard)
+        .fetch_one(db)
         .await
         .unwrap_or(0);
 
@@ -376,7 +466,13 @@ async fn check_notifications(
                 .title("Trimo")
                 .body(&message)
                 .show();
-            fired.insert(app_name);
+            // Persist that we fired today so restarts don't re-trigger
+            let _ = sqlx::query(
+                "INSERT OR IGNORE INTO notifications (app_name, date) VALUES (?, date('now'))"
+            )
+            .bind(&app_name)
+            .execute(db)
+            .await;
         }
     }
 }

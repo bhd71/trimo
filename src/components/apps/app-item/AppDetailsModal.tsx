@@ -54,7 +54,7 @@ const AppDetailsModal: FC<IProps> = ({ app, onClose }) => {
                 className="modal-scroll relative w-[480px] max-h-[80vh] overflow-y-auto bg-[#0f0f1a] border border-white/10 rounded-2xl p-5 flex flex-col gap-4"
                 onClick={e => e.stopPropagation()}
             >
-                <ModalHeader logoBase64={app.logo_base64} appName={app.app_name} onClose={onClose} />
+                <ModalHeader appName={app.app_name} onClose={onClose} />
 
                 {/* Tab switcher */}
                 <div className="flex gap-2">

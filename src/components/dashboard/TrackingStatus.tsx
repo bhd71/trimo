@@ -1,25 +1,24 @@
 import React, { FC } from 'react';
+import { useAppStore } from '../../store/appStore.ts';
 
-interface IProps {
-    isMonitoring: boolean;
-    onToggle: () => void;
-}
-
-const TrackingStatus: FC<IProps> = ({ isMonitoring, onToggle }) => {
+const TrackingStatus: FC = () => {
+    const isMonitoring = useAppStore(s => s.isMonitoring);
+    const isIdle = useAppStore(s => s.isIdle);
+    const onToggle = useAppStore(s => s.toggleMonitoring);
     return (
         <div className="flex items-center gap-3">
             {/* Status indicator */}
             <div className="flex items-center gap-2">
                 <span
                     className={`w-2 h-2 rounded-full flex-shrink-0 transition-all duration-500 ${
-                        isMonitoring ? 'bg-green-400 animate-pulse' : 'bg-white/20'
+                        isMonitoring && !isIdle ? 'bg-green-400 animate-pulse' : isMonitoring && isIdle ? 'bg-yellow-400' : 'bg-white/20'
                     }`}
-                    style={isMonitoring ? { boxShadow: '0 0 6px rgba(74,222,128,0.8)' } : undefined}
+                    style={isMonitoring && !isIdle ? { boxShadow: '0 0 6px rgba(74,222,128,0.8)' } : isMonitoring && isIdle ? { boxShadow: '0 0 6px rgba(250,204,21,0.6)' } : undefined}
                 />
                 <span className={`text-sm transition-all duration-300 ${
                     isMonitoring ? 'text-white/60' : 'text-white/25'
                 }`}>
-                    {isMonitoring ? 'Tracking' : 'Not tracking'}
+                    {isMonitoring ? (isIdle ? 'Idle' : 'Tracking') : 'Not tracking'}
                 </span>
             </div>
 

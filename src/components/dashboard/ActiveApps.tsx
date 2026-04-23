@@ -1,8 +1,8 @@
 import React, { FC } from 'react';
-import { useAppData } from '../../store/AppDataContext.tsx';
+import { useAppStore } from '../../store/appStore.ts';
 
 const ActiveApps: FC = () => {
-    const { activeApps: apps } = useAppData();
+    const apps = useAppStore(s => s.activeApps);
 
     if (apps.length === 0) return null;
 

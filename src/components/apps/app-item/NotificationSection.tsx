@@ -1,9 +1,9 @@
 import React, { FC, useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { IApp, INotificationRule } from '../../../types/App.interface.ts';
-import { Base64Image } from '../../../helpers/image-convert.tsx';
+import { AppLogo } from '../../../helpers/image-convert.tsx';
 import { formatSeconds } from '../../../helpers/format-time.ts';
-import { useAppData } from '../../../store/AppDataContext.tsx';
+import { useAppStore } from '../../../store/appStore.ts';
 
 const MAX_NOTIF_HOURS = 23;
 const MAX_NOTIF_MINUTES = 59;
@@ -13,7 +13,7 @@ interface IProps {
 }
 
 const NotificationSection: FC<IProps> = ({ app }) => {
-    const { refreshNotifications } = useAppData();
+    const refreshNotifications = useAppStore(s => s.refreshNotifications);
     const [rule, setRule] = useState<INotificationRule | null>(null);
     const [editing, setEditing] = useState(false);
     const [hours, setHours] = useState(0);
@@ -92,7 +92,7 @@ const NotificationSection: FC<IProps> = ({ app }) => {
                         : 'bg-white/[0.03] border-white/10 opacity-60'
                 }`}>
                     <div className="w-9 h-9 flex-shrink-0 rounded-lg overflow-hidden">
-                        <Base64Image base64Data={app.logo_base64} />
+                        <AppLogo appName={app.app_name} />
                     </div>
                     <div className="flex-1 min-w-0">
                         <p className="text-xs font-semibold text-white/90 truncate">{app.app_name}</p>

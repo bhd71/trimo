@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import { IApp } from '../../types/App.interface.ts';
 import { formatSeconds } from '../../helpers/format-time.ts';
-import { Period } from '../../store/AppDataContext.tsx';
+import { Period } from '../../store/appStore.ts';
 
 const PERIOD_LABELS: Record<Period, string> = {
     [Period.Today]:     'Total tracked today',

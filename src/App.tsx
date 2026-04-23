@@ -1,34 +1,39 @@
-import { invoke } from '@tauri-apps/api/core';
 import './App.css';
 import AppsList from './components/apps/AppsList.tsx';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import DashboardLayout from './components/dashboard/DashboardLayout.tsx';
-import { AppDataProvider } from './store/AppDataContext.tsx';
+import { useAppStore } from './store/appStore.ts';
+import { useSettingsStore } from './store/settingsStore.ts';
 
 function App() {
-    const [monitoring, setMonitoring] = useState(false);
+    const cleanupRef = useRef<(() => void) | undefined>(undefined);
+    const initializedRef = useRef(false);
 
-    // Sync with backend — monitoring auto-starts on app launch
     useEffect(() => {
-        invoke<boolean>('get_monitoring_status').then(active => {
-            setMonitoring(active);
-        });
+        // Guard against React StrictMode double-invocation
+        if (initializedRef.current) return;
+        initializedRef.current = true;
+
+        useAppStore.getState().initListeners()
+            .then(fn => { cleanupRef.current = fn; })
+            .catch(err => console.error('[App] initListeners failed:', err));
+
+        useSettingsStore.getState().loadPreferences()
+            .catch(err => console.error('[App] loadPreferences failed:', err));
+
+        return () => {
+            cleanupRef.current?.();
+            cleanupRef.current = undefined;
+            // Do NOT reset initializedRef here — StrictMode calls cleanup then re-runs
+            // the effect, and resetting would let the second invocation slip through the
+            // guard before the first async initListeners resolves, creating duplicate listeners.
+        };
     }, []);
 
-    async function toggleMonitoring() {
-        setMonitoring(prev => !prev);
-        await invoke('toggle_monitoring');
-    }
-
     return (
-        <AppDataProvider>
-            <DashboardLayout
-                isMonitoring={monitoring}
-                onToggle={toggleMonitoring}
-            >
-                <AppsList />
-            </DashboardLayout>
-        </AppDataProvider>
+        <DashboardLayout>
+            <AppsList />
+        </DashboardLayout>
     );
 }
 

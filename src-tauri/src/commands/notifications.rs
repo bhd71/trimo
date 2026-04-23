@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use sqlx::Row;
 use tauri::State;
 
@@ -10,15 +8,11 @@ pub async fn get_app_notifications(
     state: State<'_, AppState>,
 ) -> Result<Vec<AppNotificationRule>, String> {
     log::debug!("[CMD] get_app_notifications");
-    let db = match tokio::time::timeout(Duration::from_secs(5), state.db.lock()).await {
-        Ok(db) => db,
-        Err(_) => return Err("Database lock timeout".to_string()),
-    };
 
     let rows = sqlx::query(
         "SELECT id, app_name, threshold_seconds, message, enabled FROM app_notifications ORDER BY app_name ASC",
     )
-    .fetch_all(&*db)
+    .fetch_all(&state.db)
     .await
     .map_err(|e| e.to_string())?;
 
@@ -45,10 +39,6 @@ pub async fn upsert_app_notification(
     enabled: bool,
 ) -> Result<(), String> {
     log::debug!("[CMD] upsert_app_notification app_name={} threshold_seconds={} enabled={}", app_name, threshold_seconds, enabled);
-    let db = match tokio::time::timeout(Duration::from_secs(5), state.db.lock()).await {
-        Ok(db) => db,
-        Err(_) => return Err("Database lock timeout".to_string()),
-    };
 
     sqlx::query(
         r#"
@@ -64,12 +54,15 @@ pub async fn upsert_app_notification(
     .bind(threshold_seconds)
     .bind(&message)
     .bind(enabled as i64)
-    .execute(&*db)
+    .execute(&state.db)
     .await
     .map_err(|e| e.to_string())?;
 
-    // Reset fired state so the updated rule can fire again this session
-    state.notification_fired.lock().await.remove(&app_name);
+    // Reset fired state so the updated rule can fire again today
+    let _ = sqlx::query("DELETE FROM notifications WHERE app_name = ?")
+        .bind(&app_name)
+        .execute(&state.db)
+        .await;
 
     Ok(())
 }
@@ -80,18 +73,17 @@ pub async fn delete_app_notification(
     app_name: String,
 ) -> Result<(), String> {
     log::debug!("[CMD] delete_app_notification app_name={}", app_name);
-    let db = match tokio::time::timeout(Duration::from_secs(5), state.db.lock()).await {
-        Ok(db) => db,
-        Err(_) => return Err("Database lock timeout".to_string()),
-    };
 
     sqlx::query("DELETE FROM app_notifications WHERE app_name = ?")
         .bind(&app_name)
-        .execute(&*db)
+        .execute(&state.db)
         .await
         .map_err(|e| e.to_string())?;
 
-    state.notification_fired.lock().await.remove(&app_name);
+    let _ = sqlx::query("DELETE FROM notifications WHERE app_name = ?")
+        .bind(&app_name)
+        .execute(&state.db)
+        .await;
 
     Ok(())
 }

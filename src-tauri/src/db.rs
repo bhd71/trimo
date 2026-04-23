@@ -115,7 +115,19 @@ pub async fn setup_database(db: &SqlitePool) {
     }
 
     let _ = sqlx::query(
-        "INSERT OR IGNORE INTO user_preferences (key, value) VALUES ('monitoring_interval', '1')",
+        "INSERT OR IGNORE INTO user_preferences (key, value) VALUES ('monitoring_interval', '5')",
+    )
+    .execute(db)
+    .await;
+
+    let _ = sqlx::query(
+        "INSERT OR IGNORE INTO user_preferences (key, value) VALUES ('idle_threshold_minutes', '5')",
+    )
+    .execute(db)
+    .await;
+
+    let _ = sqlx::query(
+        "INSERT OR IGNORE INTO user_preferences (key, value) VALUES ('daily_goal_seconds', '0')",
     )
     .execute(db)
     .await;
@@ -158,6 +170,22 @@ pub async fn setup_database(db: &SqlitePool) {
     .await
     {
         log::warn!("Failed to create app_notifications table: {}", e);
+    }
+
+    // Tracks which notifications have already fired today — avoids re-firing on app restart
+    if let Err(e) = sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS notifications (
+            app_name TEXT NOT NULL,
+            date     TEXT NOT NULL,
+            PRIMARY KEY (app_name, date)
+        )
+        "#,
+    )
+    .execute(db)
+    .await
+    {
+        log::warn!("Failed to create notifications table: {}", e);
     }
 
     log::info!("Database setup completed successfully");

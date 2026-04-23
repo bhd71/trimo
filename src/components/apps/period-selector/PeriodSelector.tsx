@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { Period } from '../../../store/AppDataContext.tsx';
+import { Period } from '../../../store/appStore.ts';
 
 export { Period };
 
