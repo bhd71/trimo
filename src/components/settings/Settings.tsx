@@ -50,8 +50,19 @@ const Settings: FC<IProps> = ({ onClose }) => {
   const [idleThreshold, setIdleThreshold] = useState("5");
 
   useEffect(() => {
-    invoke<boolean>("plugin:autostart|is_enabled")
-      .then(setAutostart)
+    invoke<string | null>("get_preference", { key: "autostart_initialized" })
+      .then(async (initialized) => {
+        if (!initialized) {
+          // First launch — enable autostart by default
+          await invoke("plugin:autostart|enable").catch(() => {});
+          await invoke("set_preference", { key: "autostart_initialized", value: "true" }).catch(() => {});
+          setAutostart(true);
+        } else {
+          invoke<boolean>("plugin:autostart|is_enabled")
+            .then(setAutostart)
+            .catch(() => {});
+        }
+      })
       .catch(() => {});
   }, []);
 
