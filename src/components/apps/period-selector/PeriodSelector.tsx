@@ -28,7 +28,7 @@ const PeriodSelector: FC<IProps> = ({ value, onChange }) => {
                         className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
                             isActive
                                 ? 'bg-white/10 text-white'
-                                : 'bg-[#282828] text-white/50 hover:bg-[#2e2e2e] hover:text-white/80'
+                                : 'bg-[#3a3a3a] text-white/50 hover:bg-[#404040] hover:text-white/80'
                         }`}
                     >
                         {label}

@@ -126,7 +126,7 @@ const Settings: FC<IProps> = ({ onClose }) => {
   };
 
   return (
-    <div className="bg-[#0f0f1a] border border-white/10 rounded-2xl px-6 py-5 flex flex-col gap-5">
+    <div className="bg-[#252525] border border-white/10 rounded-2xl px-6 py-5 flex flex-col gap-5">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold text-white/80 uppercase tracking-widest">
           Settings

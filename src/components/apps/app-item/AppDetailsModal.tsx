@@ -51,7 +51,7 @@ const AppDetailsModal: FC<IProps> = ({ app, onClose }) => {
             onClick={onClose}
         >
             <div
-                className="modal-scroll relative w-[480px] max-h-[80vh] overflow-y-auto bg-[#0f0f1a] border border-white/10 rounded-2xl p-5 flex flex-col gap-4"
+                className="modal-scroll relative w-[480px] max-h-[80vh] overflow-y-auto bg-[#252525] border border-white/10 rounded-2xl p-5 flex flex-col gap-4"
                 onClick={e => e.stopPropagation()}
             >
                 <ModalHeader appName={app.app_name} onClose={onClose} />
