@@ -28,7 +28,7 @@ const AppItem: FC<IProps> = ({ app, sharePercent, yesterdayDuration, onClick }) 
             onMouseDown={() => setPressed(true)}
             onMouseUp={() => { const wasPressed = pressed; setPressed(false); if (wasPressed) onClick?.(); }}
             onMouseLeave={() => setPressed(false)}
-            className={`group relative flex flex-col items-center gap-2 border border-white/10
+            className={`group relative flex flex-col items-center gap-2 bg-[#282828] border border-white/10
                 rounded-2xl px-4 pt-4 pb-5 w-full min-w-[120px] cursor-pointer overflow-hidden
                 transition-all duration-150
                 ${pressed ? 'scale-95 brightness-90' : ''}
