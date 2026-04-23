@@ -16,7 +16,8 @@
         "url": "index.html",
         "focus": true,
         "title": "Trimo",
-        "alwaysOnTop": false
+        "alwaysOnTop": false,
+        "backgroundColor": "#0f0f0f"
       }
     ],
     "security": {
