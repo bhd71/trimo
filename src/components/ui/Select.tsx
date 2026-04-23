@@ -34,8 +34,8 @@ function Select<T extends string>({ value, options, onChange }: IProps<T>) {
                 onClick={() => setOpen(o => !o)}
                 className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 border ${
                     open
-                        ? 'bg-white/10 text-white border-white/20'
-                        : 'bg-white/8 text-white/70 border-white/10 hover:bg-white/12 hover:text-white hover:border-white/20'
+                        ? 'bg-[#0f0f1a] text-white border-white/20'
+                        : 'bg-[#0f0f1a] text-white/70 border-white/10 hover:bg-white/8 hover:text-white hover:border-white/20'
                 }`}
             >
                 <span>{selected?.label}</span>
@@ -53,7 +53,7 @@ function Select<T extends string>({ value, options, onChange }: IProps<T>) {
             </button>
 
             {open && (
-                <div className="absolute top-full left-0 mt-2 min-w-full rounded-xl border border-white/10 bg-black/70 backdrop-blur-md shadow-2xl z-50 overflow-hidden py-1">
+                <div className="absolute top-full left-0 mt-2 min-w-full rounded-xl border border-white/10 bg-[#0f0f1a] shadow-2xl z-50 overflow-hidden py-1">
                     {options.map(opt => {
                         const isActive = opt.value === value;
                         return (
