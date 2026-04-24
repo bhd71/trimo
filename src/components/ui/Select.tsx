@@ -67,7 +67,7 @@ function Select<T extends string>({ value, options, onChange, className }: IProp
                                 className={`w-full text-left px-4 py-2 text-sm transition-colors duration-150 ${
                                     isActive
                                         ? 'bg-purple-600/20 text-purple-300'
-                                        : 'text-white/60 hover:bg-white/8 hover:text-white'
+                                        : 'text-white/60 hover:bg-white/[0.08] hover:text-white'
                                 }`}
                             >
                                 {opt.label}

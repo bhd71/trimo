@@ -60,7 +60,7 @@ const DailyUsageChart: FC<IProps> = ({ rows, activeDay, onHover }) => {
                     >
                         {data.map(entry => {
                             const isHighlighted = activeDay === entry.date;
-                            const isDimmed = activeDay !== null && activeDay !== entry.date;
+                            const isDimmed = activeDay != null && activeDay !== entry.date;
                             return (
                                 <Cell
                                     key={entry.date}
