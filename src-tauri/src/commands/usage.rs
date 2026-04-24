@@ -1,4 +1,4 @@
-use chrono::{NaiveDate, Utc};
+use chrono::{Local, NaiveDate, Utc};
 use sqlx::Row;
 use tauri::State;
 
@@ -17,7 +17,7 @@ fn date_str_to_utc(date_str: &str) -> Result<chrono::DateTime<Utc>, String> {
 /// computed in Rust. Bound parameters instead of inline SQLite date expressions
 /// keep date logic testable and in one place.
 fn period_to_date_range(period: &str) -> (&'static str, String) {
-    let today = Utc::now().date_naive();
+    let today = Local::now().date_naive();
     match period {
         "yesterday" => ("=",  (today - chrono::Duration::days(1)).format("%Y-%m-%d").to_string()),
         "week"      => (">=", (today - chrono::Duration::days(6)).format("%Y-%m-%d").to_string()),
@@ -183,7 +183,7 @@ pub async fn get_monitoring_trend(
         "month" => 29,
         _ => 6,
     };
-    let trend_from = (Utc::now().date_naive() - chrono::Duration::days(days_back))
+    let trend_from = (Local::now().date_naive() - chrono::Duration::days(days_back))
         .format("%Y-%m-%d").to_string();
 
     let rows = sqlx::query(
@@ -235,10 +235,10 @@ pub async fn get_dashboard_data(
     let p = period.as_deref().unwrap_or("today");
 
     let (op, period_date) = period_to_date_range(p);
-    let today     = Utc::now().date_naive().format("%Y-%m-%d").to_string();
-    let yesterday = (Utc::now().date_naive() - chrono::Duration::days(1)).format("%Y-%m-%d").to_string();
+    let today     = Local::now().date_naive().format("%Y-%m-%d").to_string();
+    let yesterday = (Local::now().date_naive() - chrono::Duration::days(1)).format("%Y-%m-%d").to_string();
     let trend_days_back: i64 = if p == "month" { 29 } else { 6 };
-    let trend_from = (Utc::now().date_naive() - chrono::Duration::days(trend_days_back))
+    let trend_from = (Local::now().date_naive() - chrono::Duration::days(trend_days_back))
         .format("%Y-%m-%d").to_string();
 
     let apps_sql = format!(

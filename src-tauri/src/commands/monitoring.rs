@@ -284,7 +284,7 @@ async fn perform_monitoring_cycle(
         sqlx::query(
             r#"
             INSERT INTO monitoring_stats (date, total_seconds)
-            VALUES (date('now'), ?)
+            VALUES (date('now', 'localtime'), ?)
             ON CONFLICT(date) DO UPDATE SET total_seconds = total_seconds + ?
             "#,
         )
@@ -313,7 +313,7 @@ async fn perform_monitoring_cycle(
             sqlx::query(
                 r#"
                 INSERT INTO app_usage (app_id, date, duration)
-                SELECT id, date('now'), ?
+                SELECT id, date('now', 'localtime'), ?
                 FROM apps WHERE name = ?
                 ON CONFLICT(app_id, date) DO UPDATE SET duration = duration + excluded.duration
                 "#,
@@ -356,7 +356,7 @@ async fn check_daily_goal(db: &SqlitePool, app_handle: &tauri::AppHandle) {
 
     // Already notified today?
     let already_fired: bool = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM notifications WHERE app_name = '_daily_goal' AND date = date('now')"
+        "SELECT COUNT(*) FROM notifications WHERE app_name = '_daily_goal' AND date = date('now', 'localtime')"
     )
     .fetch_one(db)
     .await
@@ -367,7 +367,7 @@ async fn check_daily_goal(db: &SqlitePool, app_handle: &tauri::AppHandle) {
     }
 
     let total_today: i64 = sqlx::query_scalar(
-        "SELECT COALESCE(total_seconds, 0) FROM monitoring_stats WHERE date = date('now')"
+        "SELECT COALESCE(total_seconds, 0) FROM monitoring_stats WHERE date = date('now', 'localtime')"
     )
     .fetch_optional(db)
     .await
@@ -392,7 +392,7 @@ async fn check_daily_goal(db: &SqlitePool, app_handle: &tauri::AppHandle) {
             .show();
         let _ = app_handle.emit("daily-goal-reached", ());
         let _ = sqlx::query(
-            "INSERT OR IGNORE INTO notifications (app_name, date) VALUES ('_daily_goal', date('now'))"
+            "INSERT OR IGNORE INTO notifications (app_name, date) VALUES ('_daily_goal', date('now', 'localtime'))"
         )
         .execute(db)
         .await;
@@ -438,7 +438,7 @@ async fn check_notifications(
 
         // Check if already fired today (persisted across restarts)
         let already_fired: bool = sqlx::query_scalar(
-            "SELECT COUNT(*) FROM notifications WHERE app_name = ? AND date = date('now')"
+            "SELECT COUNT(*) FROM notifications WHERE app_name = ? AND date = date('now', 'localtime')"
         )
         .bind(&app_name)
         .fetch_one(db)
@@ -451,7 +451,7 @@ async fn check_notifications(
 
         // Query today's total usage for this app
         let today_duration: i64 = sqlx::query_scalar(
-            "SELECT COALESCE(SUM(u.duration), 0) FROM app_usage u JOIN apps a ON a.id = u.app_id WHERE a.name = ? AND u.date = date('now')"
+            "SELECT COALESCE(SUM(u.duration), 0) FROM app_usage u JOIN apps a ON a.id = u.app_id WHERE a.name = ? AND u.date = date('now', 'localtime')"
         )
         .bind(&app_name)
         .fetch_one(db)
@@ -468,7 +468,7 @@ async fn check_notifications(
                 .show();
             // Persist that we fired today so restarts don't re-trigger
             let _ = sqlx::query(
-                "INSERT OR IGNORE INTO notifications (app_name, date) VALUES (?, date('now'))"
+                "INSERT OR IGNORE INTO notifications (app_name, date) VALUES (?, date('now', 'localtime'))"
             )
             .bind(&app_name)
             .execute(db)
@@ -481,7 +481,7 @@ async fn update_tray_tooltip(app_handle: &tauri::AppHandle, db: &SqlitePool) {
     use crate::helpers::name_helper::format_duration;
 
     let total: i64 = sqlx::query_scalar(
-        "SELECT COALESCE(SUM(total_seconds), 0) FROM monitoring_stats WHERE date = date('now')",
+        "SELECT COALESCE(SUM(total_seconds), 0) FROM monitoring_stats WHERE date = date('now', 'localtime')",
     )
     .fetch_one(db)
     .await
@@ -492,7 +492,7 @@ async fn update_tray_tooltip(app_handle: &tauri::AppHandle, db: &SqlitePool) {
         SELECT a.name AS app_name, SUM(u.duration) AS total_duration
         FROM app_usage u
         JOIN apps a ON a.id = u.app_id
-        WHERE u.date = date('now')
+        WHERE u.date = date('now', 'localtime')
         GROUP BY a.id
         ORDER BY total_duration DESC
         LIMIT 3
