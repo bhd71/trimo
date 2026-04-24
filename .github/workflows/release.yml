@@ -47,8 +47,6 @@ jobs:
 
       - name: Trigger landing page rebuild
         if: success()
-        uses: peter-evans/repository-dispatch@v3
-        with:
-          token: ${{ secrets.TRIMO_WEB_PAT }}
-          repository: bhd71/trimo-web
-          event-type: new-release
+        env:
+          GH_TOKEN: ${{ secrets.TRIMO_WEB_PAT }}
+        run: gh api repos/bhd71/trimo-web/dispatches -X POST -f event_type=new-release
