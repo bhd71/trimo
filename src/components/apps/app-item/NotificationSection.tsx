@@ -130,11 +130,11 @@ const NotificationSection: FC<IProps> = ({ app }) => {
                     </div>
                 </div>
             ) : editing ? (
-                <div className="flex flex-col gap-2 bg-white/[0.03] border border-white/10 rounded-xl px-3 py-3">
+                <div className="flex flex-col gap-2 bg-neutral-900 border border-white/10 rounded-xl px-3 py-3">
                     <div className="flex gap-2">
                         <div className="flex flex-col gap-1 flex-1">
                             <label className="text-xs text-white/40">Hours</label>
-                            <div className="flex items-center bg-white/5 border border-white/10 rounded-lg overflow-hidden focus-within:border-purple-500/60 transition-colors">
+                            <div className="flex items-center bg-neutral-800 border border-white/10 rounded-lg overflow-hidden focus-within:border-purple-500/60 transition-colors">
                                 <button type="button" onClick={() => setHours(h => Math.max(0, h - 1))}
                                     className="px-2.5 py-1.5 text-white/40 hover:text-white hover:bg-white/10 transition-colors text-sm leading-none select-none">−</button>
                                 <input
@@ -148,7 +148,7 @@ const NotificationSection: FC<IProps> = ({ app }) => {
                         </div>
                         <div className="flex flex-col gap-1 flex-1">
                             <label className="text-xs text-white/40">Minutes</label>
-                            <div className="flex items-center bg-white/5 border border-white/10 rounded-lg overflow-hidden focus-within:border-purple-500/60 transition-colors">
+                            <div className="flex items-center bg-neutral-800 border border-white/10 rounded-lg overflow-hidden focus-within:border-purple-500/60 transition-colors">
                                 <button type="button" onClick={() => setMinutes(m => Math.max(0, m - 1))}
                                     className="px-2.5 py-1.5 text-white/40 hover:text-white hover:bg-white/10 transition-colors text-sm leading-none select-none">−</button>
                                 <input
@@ -189,9 +189,9 @@ const NotificationSection: FC<IProps> = ({ app }) => {
             ) : (
                 <button
                     onClick={() => openForm()}
-                    className="flex items-center gap-2 self-start px-3 py-1.5 rounded-full text-xs text-white/40 hover:text-white/80 border border-white/10 hover:border-white/20 transition-all duration-150"
+                    className="flex items-center gap-2 self-start px-4 py-2 rounded-lg text-sm text-white/60 bg-neutral-800 border border-white/10 hover:bg-neutral-700 hover:text-white hover:border-white/20 shadow-sm transition-all duration-150"
                 >
-                    <svg viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3">
+                    <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
                         <path d="M8 1a1 1 0 011 1v5h5a1 1 0 010 2H9v5a1 1 0 01-2 0V9H2a1 1 0 010-2h5V2a1 1 0 011-1z"/>
                     </svg>
                     Add notification

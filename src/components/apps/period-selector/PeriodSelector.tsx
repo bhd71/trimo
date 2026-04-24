@@ -25,10 +25,10 @@ const PeriodSelector: FC<IProps> = ({ value, onChange }) => {
                         key={p}
                         onClick={() => onChange(p)}
                         style={isActive ? { boxShadow: '0 0 12px rgba(147,51,234,0.8), 0 0 28px rgba(147,51,234,0.4)' } : undefined}
-                        className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
+                        className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-all duration-200 ${
                             isActive
-                                ? 'bg-white/10 text-white'
-                                : 'bg-[#3a3a3a] text-white/50 hover:bg-[#404040] hover:text-white/80'
+                                ? 'bg-neutral-700 border-white/15 text-white shadow-sm'
+                                : 'bg-neutral-800 border-white/5 text-white/50 shadow-sm hover:shadow-md hover:border-white/15 hover:bg-neutral-700 hover:text-white/80'
                         }`}
                     >
                         {label}

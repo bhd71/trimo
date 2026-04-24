@@ -48,17 +48,17 @@ const DashboardLayout: FC<IProps> = ({ children }) => {
 
     return (
         <main className="min-h-screen p-10 max-w-5xl mx-auto flex flex-col gap-8">
-            <header className="flex items-center justify-between">
+            <header className="flex items-center justify-between pb-6 border-b border-white/5">
                 <h1 className="text-lg font-bold text-white tracking-tight">Trimo</h1>
                 <div className="flex items-center gap-3">
                     <TrackingStatus />
                     <button
                         onClick={() => setShowSettings(s => !s)}
                         aria-label="Settings"
-                        className={`px-5 py-1.5 rounded-full text-sm font-semibold transition-all duration-150 border active:scale-95 select-none ${
+                        className={`px-5 py-1.5 rounded-full text-sm font-semibold transition-all duration-150 border active:scale-95 select-none shadow-sm ${
                             showSettings
-                                ? 'bg-purple-600/20 text-purple-300 border-purple-500/30'
-                                : 'bg-white/5 text-white/40 border-white/10 hover:bg-white/10 hover:text-white/70'
+                                ? 'bg-purple-600/20 text-purple-300 border-purple-500/30 shadow-md'
+                                : 'bg-neutral-800 text-white/40 border-white/10 hover:shadow-md hover:border-white/20 hover:text-white/70'
                         }`}
                     >
                         ⚙

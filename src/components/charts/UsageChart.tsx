@@ -21,7 +21,7 @@ const UsageChart: FC<IProps> = ({ apps }) => {
     if (data.length === 0) return null;
 
     return (
-        <div className="bg-white/5 border border-white/10 rounded-2xl px-5 py-4">
+        <div className="bg-neutral-800 border border-white/5 shadow-sm rounded-2xl px-5 py-4">
             <p className="text-xs text-white/40 uppercase tracking-widest mb-4">App usage</p>
             <ResponsiveContainer width="100%" height={220}>
                 <BarChart data={data} margin={{ top: 4, right: 8, left: 0, bottom: 4 }} barCategoryGap="30%">

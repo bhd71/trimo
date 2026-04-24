@@ -137,100 +137,106 @@ const Settings: FC<IProps> = ({ onClose }) => {
   };
 
   return (
-    <div className="bg-[#252525] border border-white/10 rounded-2xl px-6 py-5 flex flex-col gap-5">
-      <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-white/80 uppercase tracking-widest">
+    <div className="bg-neutral-900/95 backdrop-blur-md border border-white/10 shadow-xl rounded-2xl px-6 py-5 flex flex-col gap-0">
+      {/* Header */}
+      <div className="flex items-center justify-between pb-4 border-b border-white/5">
+        <h2 className="text-xs font-semibold text-white/50 uppercase tracking-widest">
           Settings
         </h2>
         <button
           onClick={onClose}
-          className="text-white/30 hover:text-white/70 transition-colors text-lg leading-none"
+          className="p-1.5 rounded-md text-white/40 hover:text-white/70 hover:bg-white/[0.08] transition-all duration-150"
           aria-label="Close settings"
         >
           ✕
         </button>
       </div>
 
-      <div className="flex flex-col gap-2">
-        <label className="text-xs text-white/40 uppercase tracking-widest">
-          Monitoring interval
-        </label>
-        <Select
-          value={String(monitoringInterval)}
-          options={INTERVAL_OPTIONS}
-          onChange={handleSave}
-        />
-        {saved && (
-          <p className="text-xs text-green-400 mt-1">
-            Saved — monitoring restarted with new interval.
-          </p>
-        )}
-      </div>
-
-      <div className="flex items-center justify-between">
-        <div className="flex flex-col">
-          <span className="text-xs text-white/60">Focus-only tracking</span>
-          <span className="text-xs text-white/25 mt-0.5">
-            Only count time for the app you're actively using
-          </span>
-        </div>
-        <button
-          onClick={handleFocusTrackingToggle}
-          className={`relative w-11 h-6 rounded-full overflow-hidden transition-colors duration-200 ${
-            focusTracking ? "bg-purple-600" : "bg-white/10"
-          }`}
-          aria-label="Toggle focus-only tracking"
-        >
-          <span
-            className={`absolute top-1 left-0 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200 ${
-              focusTracking ? "translate-x-6" : "translate-x-1"
-            }`}
+      {/* Select rows */}
+      <div className="flex flex-col gap-4 py-5 border-b border-white/5">
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-medium text-white/50 uppercase tracking-widest">
+            Monitoring interval
+          </label>
+          <Select
+            value={String(monitoringInterval)}
+            options={INTERVAL_OPTIONS}
+            onChange={handleSave}
+            className="w-full"
           />
-        </button>
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <label className="text-xs text-white/40 uppercase tracking-widest">
-          Idle detection threshold
-        </label>
-        <Select
-          value={idleThreshold}
-          options={IDLE_OPTIONS}
-          onChange={handleIdleThresholdChange}
-        />
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <label className="text-xs text-white/40 uppercase tracking-widest">
-          Daily screen time goal
-        </label>
-        <Select
-          value={String(dailyGoalSeconds)}
-          options={GOAL_OPTIONS}
-          onChange={handleDailyGoalChange}
-        />
-      </div>
-
-      <div className="flex items-center justify-between">
-        <div className="flex flex-col">
-          <span className="text-xs text-white/60">Launch on startup</span>
-          <span className="text-xs text-white/25 mt-0.5">
-            Start Trimo automatically when Windows starts
-          </span>
+          {saved && (
+            <p className="text-xs text-green-400">
+              Saved — monitoring restarted with new interval.
+            </p>
+          )}
         </div>
-        <button
-          onClick={handleAutostartToggle}
-          className={`relative w-11 h-6 rounded-full overflow-hidden transition-colors duration-200 ${
-            autostart ? "bg-purple-600" : "bg-white/10"
-          }`}
-          aria-label="Toggle launch on startup"
-        >
-          <span
-            className={`absolute top-1 left-0 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200 ${
-              autostart ? "translate-x-6" : "translate-x-1"
-            }`}
+
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-medium text-white/50 uppercase tracking-widest">
+            Idle detection threshold
+          </label>
+          <Select
+            value={idleThreshold}
+            options={IDLE_OPTIONS}
+            onChange={handleIdleThresholdChange}
+            className="w-full"
           />
-        </button>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-medium text-white/50 uppercase tracking-widest">
+            Daily screen time goal
+          </label>
+          <Select
+            value={String(dailyGoalSeconds)}
+            options={GOAL_OPTIONS}
+            onChange={handleDailyGoalChange}
+            className="w-full"
+          />
+        </div>
+      </div>
+
+      {/* Toggle rows */}
+      <div className="flex flex-col gap-4 pt-5">
+        <div className="flex items-center justify-between gap-6">
+          <div>
+            <p className="text-sm font-medium text-white/80">Focus-only tracking</p>
+            <p className="text-xs text-white/40 mt-0.5">Only count time for the app you're actively using</p>
+          </div>
+          <button
+            onClick={handleFocusTrackingToggle}
+            className={`relative flex-shrink-0 w-11 h-6 rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500/40 focus:ring-offset-1 focus:ring-offset-neutral-900 ${
+              focusTracking ? "bg-purple-600" : "bg-white/10 hover:bg-white/15"
+            }`}
+            aria-label="Toggle focus-only tracking"
+          >
+            <span
+              className={`absolute top-1 left-0 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200 ${
+                focusTracking ? "translate-x-6" : "translate-x-1"
+              }`}
+            />
+          </button>
+        </div>
+
+        <div className="flex items-center justify-between gap-6">
+          <div>
+            <p className="text-sm font-medium text-white/80">Launch on startup</p>
+            <p className="text-xs text-white/40 mt-0.5">Start Trimo automatically when Windows starts</p>
+          </div>
+          <button
+            onClick={handleAutostartToggle}
+            className={`relative flex-shrink-0 w-11 h-6 rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500/40 focus:ring-offset-1 focus:ring-offset-neutral-900 ${
+              autostart ? "bg-purple-600" : "bg-white/10 hover:bg-white/15"
+            }`}
+            aria-label="Toggle launch on startup"
+          >
+            <span
+              className={`absolute top-1 left-0 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200 ${
+                autostart ? "translate-x-6" : "translate-x-1"
+              }`}
+            />
+          </button>
+        </div>
       </div>
     </div>
   );

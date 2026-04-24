@@ -19,7 +19,7 @@ const TrendChart: FC<IProps> = ({ data }) => {
     }));
 
     return (
-        <div className="bg-white/5 border border-white/10 rounded-2xl px-5 py-4">
+        <div className="bg-neutral-800 border border-white/5 shadow-sm rounded-2xl px-5 py-4">
             <p className="text-xs text-white/40 uppercase tracking-widest mb-4">Daily screen time</p>
             <ResponsiveContainer width="100%" height={180}>
                 <AreaChart data={chartData} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>

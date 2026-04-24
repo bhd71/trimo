@@ -84,29 +84,29 @@ const AppsList = () => {
             {/* App cards — shown at the top */}
             {apps.length > 0 && (
                 <div className="flex flex-col gap-3">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
                         {/* Search */}
-                        <div className="relative flex-1">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30 text-sm pointer-events-none">⌕</span>
+                        <div className="relative flex-1 group">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 group-focus-within:text-white/70 text-sm pointer-events-none transition-colors duration-150">⌕</span>
                             <input
                                 ref={searchRef}
                                 type="text"
                                 placeholder="Search apps…"
                                 value={searchQuery}
                                 onChange={e => setSearchQuery(e.target.value)}
-                                className="w-full bg-[#3a3a3a] border border-white/10 rounded-xl pl-8 pr-3 py-2 text-sm text-white/80 placeholder-white/25 outline-none focus:border-purple-500/50 focus:bg-[#404040] transition-all"
+                                className="w-full bg-neutral-800 border border-white/10 rounded-lg pl-8 pr-8 py-2 text-sm text-white placeholder:text-white/35 outline-none hover:border-white/20 focus:border-white/30 focus:ring-2 focus:ring-purple-500/25 transition-all duration-150"
                             />
                             {searchQuery && (
                                 <button
                                     onClick={() => setSearchQuery('')}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70 transition-colors duration-150"
                                 >
                                     ✕
                                 </button>
                             )}
                         </div>
                         {/* Sort */}
-                        <div className="w-36 shrink-0">
+                        <div className="shrink-0">
                             <Select<SortKey>
                                 value={sortKey}
                                 options={isToday ? SORT_OPTIONS : SORT_OPTIONS.filter(o => o.value !== 'pct_change')}
