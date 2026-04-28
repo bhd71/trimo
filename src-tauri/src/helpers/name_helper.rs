@@ -157,7 +157,7 @@ pub fn format_duration(seconds: i64) -> String {
     let secs = seconds % 60;
 
     if hours > 0 {
-        format!("{}h {}m {}s", hours, minutes, secs)
+        format!("{}h {}m", hours, minutes)
     } else if minutes > 0 {
         format!("{}m {}s", minutes, secs)
     } else {
