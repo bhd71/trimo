@@ -21,12 +21,23 @@ const AppDetailsModal: FC<IProps> = ({ app, onClose }) => {
     const [loading, setLoading] = useState(true);
     const [tab, setTab] = useState<Tab>('week');
     const [activeDay, setActiveDay] = useState<string | null>(null);
+    const [ignored, setIgnored] = useState(false);
+    const [togglingIgnore, setTogglingIgnore] = useState(false);
 
     useEffect(() => {
         invoke<IAppDailyUsage[]>('get_app_daily_usage', { appName: app.app_name })
             .then(data => setRows(data))
             .finally(() => setLoading(false));
+        invoke<boolean>('get_app_ignored', { appName: app.app_name })
+            .then(setIgnored);
     }, [app.app_name]);
+
+    const handleToggleIgnore = async () => {
+        setTogglingIgnore(true);
+        await invoke('set_app_ignored', { appName: app.app_name, ignored: !ignored });
+        setIgnored(prev => !prev);
+        setTogglingIgnore(false);
+    };
 
     const weekCutoff = useMemo(() => {
         const d = new Date();
@@ -139,6 +150,27 @@ const AppDetailsModal: FC<IProps> = ({ app, onClose }) => {
                 )}
 
                 <NotificationSection app={app} />
+
+                {/* Tracking toggle */}
+                <div className="border-t border-white/5 pt-4 flex items-center justify-between">
+                    <div className="flex flex-col gap-0.5">
+                        <span className="text-sm font-medium text-white/80">Tracking</span>
+                        <span className="text-xs text-white/35">
+                            {ignored ? 'This app is excluded from time tracking.' : 'Time is being recorded for this app.'}
+                        </span>
+                    </div>
+                    <button
+                        onClick={handleToggleIgnore}
+                        disabled={togglingIgnore}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all duration-150 disabled:opacity-50 ${
+                            ignored
+                                ? 'bg-green-500/15 text-green-400 border-green-400/25 hover:bg-green-500/25'
+                                : 'bg-red-500/15 text-red-400 border-red-400/25 hover:bg-red-500/25'
+                        }`}
+                    >
+                        {ignored ? 'Resume tracking' : 'Stop tracking'}
+                    </button>
+                </div>
             </div>
         </div>
     );

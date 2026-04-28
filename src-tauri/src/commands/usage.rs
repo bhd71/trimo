@@ -83,6 +83,10 @@ pub async fn get_app_usage_stats(
         FROM app_usage u
         JOIN apps a ON a.id = u.app_id
         WHERE u.date {op} ?
+          AND NOT EXISTS (
+              SELECT 1 FROM user_preferences
+              WHERE key = 'ignored_app:' || a.name AND value = 'true'
+          )
         GROUP BY a.id
         ORDER BY total_duration DESC
         "#
@@ -248,6 +252,10 @@ pub async fn get_dashboard_data(
         FROM app_usage u
         JOIN apps a ON a.id = u.app_id
         WHERE u.date {op} ?
+          AND NOT EXISTS (
+              SELECT 1 FROM user_preferences
+              WHERE key = 'ignored_app:' || a.name AND value = 'true'
+          )
         GROUP BY a.id
         ORDER BY total_duration DESC"#
     );
@@ -264,6 +272,10 @@ pub async fn get_dashboard_data(
         FROM app_usage u
         JOIN apps a ON a.id = u.app_id
         WHERE u.date = ?
+          AND NOT EXISTS (
+              SELECT 1 FROM user_preferences
+              WHERE key = 'ignored_app:' || a.name AND value = 'true'
+          )
         GROUP BY a.id
         ORDER BY total_duration DESC"#
         ).bind(&yesterday).fetch_all(&state.db),
@@ -277,7 +289,22 @@ pub async fn get_dashboard_data(
     )
     .map_err(|e| format!("Database query failed: {}", e))?;
 
-    let active_apps = state.active_apps.lock().await.clone();
+    // Fetch ignored app names to exclude from the active list
+    let ignored_set: std::collections::HashSet<String> = sqlx::query(
+        "SELECT key FROM user_preferences WHERE key LIKE 'ignored_app:%' AND value = 'true'"
+    )
+    .fetch_all(&state.db)
+    .await
+    .unwrap_or_default()
+    .into_iter()
+    .map(|r| r.get::<String, _>("key").trim_start_matches("ignored_app:").to_string())
+    .collect();
+
+    let active_apps: Vec<String> = state.active_apps.lock().await
+        .iter()
+        .filter(|name| !ignored_set.contains(*name))
+        .cloned()
+        .collect();
 
     let trend_data = trend_rows
         .into_iter()

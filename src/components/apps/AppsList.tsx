@@ -1,4 +1,5 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
+import { invoke } from '@tauri-apps/api/core';
 import AppItem from './app-item/AppItem.tsx';
 
 import PeriodSelector from './period-selector/PeriodSelector.tsx';
@@ -35,6 +36,18 @@ const AppsList = () => {
     const dailyGoalSeconds = useSettingsStore(s => s.dailyGoalSeconds);
     const [selectedApp, setSelectedApp] = useState<IApp | null>(null);
     const [sortKey, setSortKey] = useState<SortKey>('duration_desc');
+    const [showIgnored, setShowIgnored] = useState(false);
+    const [ignoredApps, setIgnoredApps] = useState<IApp[]>([]);
+
+    const loadIgnoredApps = useCallback(async () => {
+        const data = await invoke<IApp[]>('get_ignored_apps');
+        setIgnoredApps(data);
+    }, []);
+
+    useEffect(() => {
+        if (showIgnored) loadIgnoredApps();
+    }, [showIgnored, loadIgnoredApps]);
+
     const searchRef = useRef<HTMLInputElement>(null);
 
     const yesterdayMap = new Map(yesterdayApps.map(a => [a.app_name, a.duration]));
@@ -113,7 +126,36 @@ const AppsList = () => {
                                 onChange={setSortKey}
                             />
                         </div>
+                        {/* Ignored filter */}
+                        <button
+                            onClick={() => setShowIgnored(prev => !prev)}
+                            className={`shrink-0 px-3 py-2 rounded-lg text-sm font-medium border transition-all duration-150 ${
+                                showIgnored
+                                    ? 'bg-orange-500/20 text-orange-300 border-orange-400/30'
+                                    : 'bg-neutral-800 text-white/40 border-white/10 hover:text-white/70 hover:border-white/20'
+                            }`}
+                        >
+                            Ignored
+                        </button>
                     </div>
+                    {/* Ignored apps list */}
+                    {showIgnored && (
+                        ignoredApps.length === 0
+                            ? <p className="text-white/30 text-sm text-center py-6">No ignored apps.</p>
+                            : <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))' }}>
+                                {ignoredApps.map(app => (
+                                    <AppItem
+                                        key={app.id}
+                                        app={app}
+                                        sharePercent={0}
+                                        onClick={() => setSelectedApp(app)}
+                                    />
+                                ))}
+                              </div>
+                    )}
+
+                    {/* Normal apps grid */}
+                    {!showIgnored && (
                     <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))' }}>
                         {sorted.map((app) => (
                             <AppItem
@@ -125,6 +167,7 @@ const AppsList = () => {
                             />
                         ))}
                     </div>
+                    )}
                 </div>
             )}
 
@@ -134,7 +177,7 @@ const AppsList = () => {
             <TrendChart data={trendData} />
 
             {selectedApp && (
-                <AppDetailsModal app={selectedApp} onClose={() => setSelectedApp(null)} />
+                <AppDetailsModal app={selectedApp} onClose={() => { setSelectedApp(null); if (showIgnored) loadIgnoredApps(); }} />
             )}
         </div>
     );

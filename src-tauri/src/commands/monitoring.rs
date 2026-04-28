@@ -277,6 +277,17 @@ async fn perform_monitoring_cycle(
     .map(|r| r.get::<String, _>("value") != "false")
     .unwrap_or(true);
 
+    // Fetch apps the user has excluded from tracking
+    let ignored_apps: std::collections::HashSet<String> = sqlx::query(
+        "SELECT key FROM user_preferences WHERE key LIKE 'ignored_app:%' AND value = 'true'"
+    )
+    .fetch_all(db)
+    .await
+    .unwrap_or_default()
+    .into_iter()
+    .map(|r| r.get::<String, _>("key").trim_start_matches("ignored_app:").to_string())
+    .collect();
+
     let mut tx = db.begin().await?;
 
     // Increment monitoring_stats when: focus tracking off (always active), or focused app present
@@ -308,8 +319,11 @@ async fn perform_monitoring_cycle(
         .execute(&mut *tx)
         .await?;
 
-        // Accumulate duration: only focused app (focus mode) or all apps (all-apps mode)
-        if !focus_tracking_enabled || focused_name.as_deref() == Some(app_name.as_str()) {
+        // Accumulate duration: only focused app (focus mode) or all apps (all-apps mode),
+        // and only when the app has not been excluded from tracking by the user.
+        if !ignored_apps.contains(app_name)
+            && (!focus_tracking_enabled || focused_name.as_deref() == Some(app_name.as_str()))
+        {
             sqlx::query(
                 r#"
                 INSERT INTO app_usage (app_id, date, duration)

@@ -81,6 +81,9 @@ pub async fn run() {
             commands::notifications::get_app_notifications,
             commands::notifications::upsert_app_notification,
             commands::notifications::delete_app_notification,
+            commands::ignored::set_app_ignored,
+            commands::ignored::get_app_ignored,
+            commands::ignored::get_ignored_apps,
         ])
         .setup(move |app| {
             // Auto-start monitoring with persisted interval
