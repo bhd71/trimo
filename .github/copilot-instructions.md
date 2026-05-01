@@ -33,6 +33,23 @@ Always use the release script — never bump versions or tag manually:
 
 It bumps `package.json`, `src-tauri/Cargo.toml`, and `src-tauri/tauri.conf.json`, then commits, tags, and pushes in one shot.
 
+The `.github/workflows/release.yml` GitHub Actions workflow fires automatically on the pushed tag. It builds the app with `tauri-apps/tauri-action`, signs the installer using the secrets below, and uploads all artifacts (installer, `.sig`, `latest.json`) to the GitHub Release.
+
+**Required GitHub repository secrets** (`github.com/bhd71/trimo/settings/secrets/actions`):
+
+| Secret | Value |
+|--------|-------|
+| `TAURI_SIGNING_PRIVATE_KEY` | Full contents of `~/.tauri/trimo.key` |
+| `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | Password set when the keypair was generated |
+
+The signing public key is committed in `src-tauri/tauri.conf.json` under `plugins.updater.pubkey`. The private key is **never** committed — keep it in the repo secrets and the local file `~/.tauri/trimo.key` only.
+
+### Auto-updater
+
+The app ships `tauri-plugin-updater`. On startup it checks `https://github.com/bhd71/trimo/releases/latest/download/latest.json` if the user has enabled auto-update (`auto_update_enabled` preference). Users can also manually trigger a check or install from the Settings panel.
+
+The `latest.json` manifest is generated automatically by `tauri-action` during the release build and uploaded as a release asset — no manual step required.
+
 ---
 
 ## Architecture
