@@ -31,6 +31,21 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
+      - name: Check signing secrets
+        shell: pwsh
+        run: |
+          if ([string]::IsNullOrEmpty("${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}")) {
+            Write-Host "::warning::TAURI_SIGNING_PRIVATE_KEY is NOT set — .sig files and latest.json will not be generated"
+          } else {
+            $key = "${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}"
+            Write-Host "TAURI_SIGNING_PRIVATE_KEY is set (length: $($key.Length) chars)"
+          }
+          if ([string]::IsNullOrEmpty("${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}")) {
+            Write-Host "::warning::TAURI_SIGNING_PRIVATE_KEY_PASSWORD is NOT set"
+          } else {
+            Write-Host "TAURI_SIGNING_PRIVATE_KEY_PASSWORD is set"
+          }
+
       - name: Build and release Tauri app
         uses: tauri-apps/tauri-action@action-v0.6.2
         env:
@@ -47,6 +62,18 @@ jobs:
           releaseDraft: false
           prerelease: false
           updaterJsonPreferNsis: true
+
+      - name: List build artifacts
+        if: always()
+        shell: pwsh
+        run: |
+          Write-Host "=== Bundle output ==="
+          $bundleDir = "src-tauri\target\release\bundle"
+          if (Test-Path $bundleDir) {
+            Get-ChildItem -Recurse $bundleDir | Select-Object FullName, Length | Format-Table -AutoSize
+          } else {
+            Write-Host "Bundle directory not found: $bundleDir"
+          }
 
       - name: Trigger landing page rebuild
         if: success()
