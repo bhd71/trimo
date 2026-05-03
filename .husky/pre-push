@@ -1,2 +1,10 @@
+#!/usr/bin/env pwsh
 npm test
-cd src-tauri && cargo test
+if ($LASTEXITCODE -ne 0) { exit 1 }
+
+# Free the binary lock before cargo compiles (Windows)
+Stop-Process -Name "tauri-app" -ErrorAction SilentlyContinue
+
+Set-Location src-tauri
+cargo test
+if ($LASTEXITCODE -ne 0) { exit 1 }
