@@ -1,7 +1,5 @@
 import React, { FC, useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { check } from "@tauri-apps/plugin-updater";
-import { relaunch } from "@tauri-apps/plugin-process";
 import Select, { ISelectOption } from "../ui/Select.tsx";
 import { useSettingsStore } from "../../store/settingsStore.ts";
 
@@ -50,10 +48,6 @@ const Settings: FC<IProps> = ({ onClose }) => {
   const [autostart, setAutostart] = useState(false);
   const [focusTracking, setFocusTracking] = useState(false);
   const [idleThreshold, setIdleThreshold] = useState("5");
-  const [autoUpdate, setAutoUpdate] = useState(false);
-  const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'available' | 'up-to-date' | 'error'>('idle');
-  const [availableVersion, setAvailableVersion] = useState<string | null>(null);
-  const [installing, setInstalling] = useState(false);
 
   useEffect(() => {
     invoke<string | null>("get_preference", { key: "autostart_initialized" })
@@ -80,9 +74,6 @@ const Settings: FC<IProps> = ({ onClose }) => {
       .then((val) => {
         if (val) setIdleThreshold(val);
       })
-      .catch(() => {});
-    invoke<string | null>("get_preference", { key: "auto_update_enabled" })
-      .then((val) => setAutoUpdate(val === "true"))
       .catch(() => {});
   }, []);
 
@@ -135,53 +126,6 @@ const Settings: FC<IProps> = ({ onClose }) => {
       key: "idle_threshold_minutes",
       value,
     }).catch(() => {});
-  };
-
-  const handleAutoUpdateToggle = async () => {
-    const next = !autoUpdate;
-    setAutoUpdate(next);
-    await invoke("set_preference", { key: "auto_update_enabled", value: String(next) }).catch(() => {});
-  };
-
-  const handleCheckUpdate = async () => {
-    if (import.meta.env.DEV) {
-      setUpdateStatus('up-to-date');
-      return;
-    }
-    setUpdateStatus('checking');
-    setAvailableVersion(null);
-    try {
-      const update = await check();
-      if (update?.available) {
-        setUpdateStatus('available');
-        setAvailableVersion(update.version);
-      } else {
-        setUpdateStatus('up-to-date');
-      }
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      // No release published yet or endpoint unreachable — not a real error
-      if (msg.includes('release JSON') || msg.includes('204') || msg.includes('404') || msg.includes('status code')) {
-        setUpdateStatus('up-to-date');
-      } else {
-        setUpdateStatus('error');
-      }
-    }
-  };
-
-  const handleInstallUpdate = async () => {
-    if (import.meta.env.DEV) return;
-    setInstalling(true);
-    try {
-      const update = await check();
-      if (update?.available) {
-        await update.downloadAndInstall();
-        await relaunch();
-      }
-    } catch {
-      setInstalling(false);
-      setUpdateStatus('error');
-    }
   };
 
   const handleDailyGoalChange = async (value: string) => {
@@ -292,56 +236,6 @@ const Settings: FC<IProps> = ({ onClose }) => {
               }`}
             />
           </button>
-        </div>
-
-        <div className="flex items-center justify-between gap-6">
-          <div>
-            <p className="text-sm font-medium text-white/80">Auto-update</p>
-            <p className="text-xs text-white/40 mt-0.5">Automatically check for updates on startup</p>
-          </div>
-          <button
-            onClick={handleAutoUpdateToggle}
-            className={`relative flex-shrink-0 w-11 h-6 rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500/40 focus:ring-offset-1 focus:ring-offset-neutral-900 ${
-              autoUpdate ? "bg-purple-600" : "bg-white/10 hover:bg-white/15"
-            }`}
-            aria-label="Toggle auto-update"
-          >
-            <span
-              className={`absolute top-1 left-0 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200 ${
-                autoUpdate ? "translate-x-6" : "translate-x-1"
-              }`}
-            />
-          </button>
-        </div>
-
-        <div className="flex flex-col gap-2 pt-1">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handleCheckUpdate}
-              disabled={updateStatus === 'checking' || installing}
-              className="px-4 py-1.5 rounded-full text-xs font-medium bg-white/5 text-white/50 hover:bg-white/10 hover:text-white/80 transition-all duration-150 disabled:opacity-40 border border-white/10"
-            >
-              {updateStatus === 'checking' ? 'Checking…' : 'Check for updates'}
-            </button>
-            {updateStatus === 'up-to-date' && (
-              <span className="text-xs text-green-400">You're up to date</span>
-            )}
-            {updateStatus === 'error' && (
-              <span className="text-xs text-red-400">Could not reach update server</span>
-            )}
-          </div>
-          {updateStatus === 'available' && availableVersion && (
-            <div className="flex items-center gap-3">
-              <span className="text-xs text-white/60">v{availableVersion} available</span>
-              <button
-                onClick={handleInstallUpdate}
-                disabled={installing}
-                className="px-3 py-1 rounded-full text-xs font-medium bg-purple-600/20 text-purple-300 hover:bg-purple-600/40 hover:text-white transition-all duration-150 disabled:opacity-40"
-              >
-                {installing ? 'Installing…' : 'Install & Restart'}
-              </button>
-            </div>
-          )}
         </div>
       </div>
     </div>
