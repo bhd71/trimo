@@ -7,7 +7,7 @@ const UpdateToast: FC = () => {
     const [installing, setInstalling] = useState(false);
 
     useEffect(() => {
-        if (import.meta.env.DEV) { setUpdateAvailable('9.9.9'); return; }
+        if (import.meta.env.DEV) return;
         check()
             .then(update => {
                 if (update?.available) setUpdateAvailable(update.version);
