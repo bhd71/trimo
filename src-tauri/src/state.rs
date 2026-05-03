@@ -6,16 +6,6 @@ use serde::{Deserialize, Serialize};
 use sqlx::sqlite::SqlitePool;
 use tokio::sync::Mutex;
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct AppUsage {
-    pub id: Option<i64>,
-    pub app_name: String,
-    pub timestamp: DateTime<Utc>,
-    #[serde(default)]
-    pub duration: i64,
-    pub logo_base64: Option<String>,
-}
-
 #[derive(Debug, Serialize)]
 pub struct AppUsageStats {
     pub id: Option<i64>,

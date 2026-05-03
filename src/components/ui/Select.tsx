@@ -39,7 +39,7 @@ function Select<T extends string>({ value, options, onChange, className }: IProp
                         : 'bg-neutral-800 text-white/60 border-white/10 hover:text-white hover:border-white/20'
                 }`}
             >
-                <span>{selected?.label}</span>
+                <span className="leading-none">{selected?.label}</span>
                 <svg
                     className={`w-3.5 h-3.5 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
                     viewBox="0 0 12 12"

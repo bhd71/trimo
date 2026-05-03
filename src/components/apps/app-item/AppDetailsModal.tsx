@@ -93,8 +93,9 @@ const AppDetailsModal: FC<IProps> = ({ app, onClose }) => {
                     <div className="flex items-center gap-3 -mt-1 px-0.5">
                         <span className="text-white/70 text-sm font-medium">{formatSeconds(total)}</span>
                         {trend !== null && (
-                            <span className={`text-xs font-medium ${trend >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                                {trend >= 0 ? '↑' : '↓'} {Math.abs(trend)}% vs last week
+                            <span className={`inline-flex items-center gap-1 text-xs font-medium ${trend >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                <span className="leading-none">{trend >= 0 ? '↑' : '↓'}</span>
+                                <span>{Math.abs(trend)}% vs last week</span>
                             </span>
                         )}
                         {peakRow && (

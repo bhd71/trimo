@@ -144,6 +144,10 @@ const Settings: FC<IProps> = ({ onClose }) => {
   };
 
   const handleCheckUpdate = async () => {
+    if (import.meta.env.DEV) {
+      setUpdateStatus('up-to-date');
+      return;
+    }
     setUpdateStatus('checking');
     setAvailableVersion(null);
     try {
@@ -154,12 +158,19 @@ const Settings: FC<IProps> = ({ onClose }) => {
       } else {
         setUpdateStatus('up-to-date');
       }
-    } catch {
-      setUpdateStatus('error');
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      // No release published yet or endpoint unreachable — not a real error
+      if (msg.includes('release JSON') || msg.includes('204') || msg.includes('404') || msg.includes('status code')) {
+        setUpdateStatus('up-to-date');
+      } else {
+        setUpdateStatus('error');
+      }
     }
   };
 
   const handleInstallUpdate = async () => {
+    if (import.meta.env.DEV) return;
     setInstalling(true);
     try {
       const update = await check();
@@ -316,7 +327,7 @@ const Settings: FC<IProps> = ({ onClose }) => {
               <span className="text-xs text-green-400">You're up to date</span>
             )}
             {updateStatus === 'error' && (
-              <span className="text-xs text-red-400">Check failed</span>
+              <span className="text-xs text-red-400">Could not reach update server</span>
             )}
           </div>
           {updateStatus === 'available' && availableVersion && (

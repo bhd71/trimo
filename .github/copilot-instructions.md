@@ -193,6 +193,36 @@ last_external_focus: Arc<Mutex<Option<String>>>  // preserves time when user swi
 - Background task handle stored in `Arc<Mutex<Option<JoinHandle<()>>>>` in `AppState`
 - All date comparisons use **local time**: `date('now', 'localtime')` in SQL, `Local::now()` in Rust — never `Utc::now()` or bare `date('now')`
 
+### Tests
+
+**Philosophy: meaningful over numerous.**
+Do not generate tests just to increase coverage. Every test must protect a real user-facing behaviour or a known failure mode. Ask: "would a bug here cause wrong data shown to the user, a crash, or silent data loss?" — if no, skip the test.
+
+**What is always worth testing:**
+
+| Layer | Worth testing |
+|-------|--------------|
+| `helpers/name_helper.rs` | Every process→app mapping in `map_helper_to_main_app`; every entry in `should_skip_process`; all `format_duration` boundaries (0 s, 59 s, 60 s, 3599 s, 3600 s) |
+| `process/filter.rs` | Self-exclusion, case-insensitive match, known system process blocklist, normal app passes through |
+| `logo/placeholder.rs` | SVG output contains the first letter of the app name uppercased; handles single-char, multi-char, and emoji-starting names |
+| `helpers/format-time.ts` | `formatSeconds` at every unit boundary (0, 59, 60, 3599, 3600); `yAxisTick` at same boundaries; `formatDateLabel` month/day accuracy |
+| `helpers/app-stats.ts` | `pctChange` — zero yesterday, no change, increase, decrease, rounding; `sortApps` — all four sort keys including `pct_change` with mixed yesterday data |
+
+**What is never worth testing:**
+- JSX layout, CSS classes, or Tailwind output
+- Tauri commands (need app handle + DB)
+- Win32 calls (`GetLastInputInfo`, `SHGetImageList`, `DrawIconEx`)
+- Database queries (need live `SqlitePool`)
+- Zustand store wiring
+- Anything that would require mocking more lines than the function under test
+
+**Test quality rules (enforced — do not break them):**
+1. **One behaviour per `it`/`#[test]`** — name it as a sentence: `"returns null when yesterday is 0"`, not `"test pctChange"`.
+2. **No `// TODO` stubs** — every test must have a concrete `expect`/`assert_eq!` with a known value.
+3. **No redundant duplication** — if three inputs all exercise the same code path, keep one representative case, not three.
+4. **Boundary values only for numeric logic** — test the exact values where behaviour changes (e.g. 59 s vs 60 s), not arbitrary mid-range values.
+5. **New process mappings must have a test** — whenever `map_helper_to_main_app` or `should_skip_process` in `name_helper.rs` is changed, a matching test must be added in `src-tauri/tests/name_helper.rs`.
+
 ### Database
 | Env | Path |
 |-----|------|
