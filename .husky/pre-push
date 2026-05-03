@@ -1,6 +1,4 @@
 npm test || exit 1
 
-# Free the binary lock before cargo compiles (Windows)
-taskkill /F /IM tauri-app.exe /T 2>/dev/null || true
-
-cd src-tauri && cargo test --lib --tests || exit 1
+# Verify Rust compiles (full cargo test runs in CI)
+cd src-tauri && cargo check --tests || exit 1
